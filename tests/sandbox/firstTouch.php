@@ -5,6 +5,7 @@ namespace Schemer\Tests;
 use Schemer\Extensions\FormExtender;
 use Schemer\Extensions\FormInputSpecification;
 use Schemer\Extensions\FormsForSchemer;
+use Schemer\Extensions\Transformers\SchemePathToInputNameTransformer;
 use Schemer\Node;
 use Schemer\Scheme;
 use Schemer\Validators\Inputs\NumericInput;
@@ -151,6 +152,18 @@ final class SimpleTestCase
 {
 	public static function run()
 	{
+		if (isset($_POST['schemeId'])) {
+			$schemeId = ucfirst($_POST['schemeId']);
+			self::handleSchemeUpdate(
+				call_user_func(
+					[ SimpleTestCase::class, sprintf('defineScheme%s', $schemeId) ],
+					call_user_func(
+						[ SimpleTestCase::class, sprintf('buildScheme%s', $schemeId) ]
+					)
+				)
+			);
+		}
+
 		echo "<h3>Scheme One</h3>";
 		self::print(
 			$schemeOne = self::defineSchemeOne(
@@ -171,6 +184,9 @@ final class SimpleTestCase
 	private static function buildSchemeOne(): Node
 	{
 		return Scheme::bag(
+
+			// just for purposes of this test
+			Scheme::prop('schemeId', 'one'),
 
 			Scheme::candidates('draws',
 
@@ -224,6 +240,9 @@ final class SimpleTestCase
 	private static function buildSchemeTwo(): Node
 	{
 		return Scheme::bag(
+
+			// just for purposes of this test
+			Scheme::prop('schemeId', 'two'),
 
 			Scheme::prop('competition',
 
@@ -326,12 +345,13 @@ final class SimpleTestCase
 
 	private static function renderFormsForScheme(Node $scheme)
 	{
-		echo $form = '<form>';
+		echo $form = sprintf('<form action="%s" method="post">', basename(__FILE__));
 
 		(new FormsForSchemer)
 			->fromScheme($scheme)
 
-			->filter(function(FormInputSpecification $spec) {
+			// ToDo: Finish form inputs for existing nodes update
+			/*->filter(function(FormInputSpecification $spec) {
 				return $spec->getGroup() !== null;
 			})
 			->map(function(FormInputSpecification $spec) {
@@ -339,14 +359,37 @@ final class SimpleTestCase
 					$spec->setAsDisabled();
 				}
 			})
-			->extendForm(new SimpleFormBuilder($form))
+			->extendForm(new SimpleFormBuilder($form))*/
 
 			->filter(function(FormInputSpecification $spec) {
 				return $spec->getGroup() === null;
 			})
 			->extendForm(new SimpleFormBuilder($form));
 
+		$form .= sprintf(
+			'<input type="hidden" name="schemeId" value="%s">' .
+				'<input type="submit" name="update" value="Update scheme">',
+			$scheme->get('schemeId')->getValue()
+		);
+
 		echo $form . '</form>';
+	}
+
+	private static function handleSchemeUpdate(Node $scheme)
+	{
+		$values = array_filter($_POST, function($_, $key) {
+			return strpos($key, SchemePathToInputNameTransformer::INPUT_PREFIX) === 0;
+		},ARRAY_FILTER_USE_BOTH);
+
+		(new FormsForSchemer)
+			->fromScheme($scheme)
+			->updateScheme($scheme, $values);
+
+		echo sprintf('<h3>Updated scheme %s</h3>', ucfirst($scheme->get('schemeId')->getValue()));
+
+		self::print($scheme);
+
+		exit;
 	}
 
 	private static function print(Node $scheme)

@@ -240,6 +240,11 @@ class FormsForSchemer
 
 				$this->validation($scheme, $spec, $value);
 
+				if ($spec->getProperty()->isUniqueKey()
+					&& (!is_string($value) || strpos($value, '=') === false)) {
+					$value = sprintf('%s=%s', $spec->getName(), is_array($value) ? implode(',', $value) : $value);
+				}
+
 				if (($key = $scheme->set($path, $value)->getKey()) !== null) {
 					call_user_func_array([ $uniqueKeys, 'put' ], explode('=', $key));
 				}
