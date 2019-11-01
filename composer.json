@@ -1,0 +1,38 @@
+{
+	"name": "romantmb/schemer",
+	"type": "library",
+	"authors": [
+		{
+			"name": "Roman Pistek",
+			"email": "ahoj@romanpistek.cz",
+			"homepage": "http://www.romanpistek.cz",
+			"role": "Developer"
+		}
+	],
+	"description": "Dynamic JSON scheme builder",
+	"homepage": "https://github.com/romantmb/schemer",
+	"license": "CC-BY-SA-4.0",
+	"autoload": {
+		"psr-4": {
+			"Schemer\\": "src/Schemer",
+			"Schemer\\Bridges\\": "src/Bridges"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Schemer\\Tests\\": "tests/"
+		}
+	},
+	"require": {
+		"php": "^7.1",
+		"illuminate/support": "^5.5",
+		"league/fractal": "^0.17",
+		"nette/utils": "^2.4",
+		"tuupola/base58": "^2.0"
+	},
+	"require-dev": {
+		"symfony/var-dumper": "^4.3",
+		"tracy/tracy": "^2.6",
+		"nette/forms": "^2.4"
+	}
+}

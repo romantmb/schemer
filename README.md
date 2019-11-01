@@ -1,1 +1,3 @@
-# schemer
+# Schemer
+
+(ToDo: Write down docs)
