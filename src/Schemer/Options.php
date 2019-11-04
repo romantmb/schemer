@@ -232,7 +232,7 @@ class Options extends Node implements NamedNode
 
 		$def = implode('=',
 			[ $definition ]
-			+ ($value === null ? [] : [ 1 => is_array($value) ? implode(',', $value) : $value ])
+			+ ($value === null ? [] : [ 1 => self::serializeValue($value) ])
 		);
 
 		if ($this->containsPrimitives() && $value !== null) {
@@ -383,6 +383,16 @@ class Options extends Node implements NamedNode
 	public function toJson($options = 0)
 	{
 		return $this->collection()->toJson($options);
+	}
+
+
+	/**
+	 * @param mixed $value
+	 * @return string
+	 */
+	public static function serializeValue($value): string
+	{
+		return is_array($value) ? implode(',', $value) : (string) $value;
 	}
 
 

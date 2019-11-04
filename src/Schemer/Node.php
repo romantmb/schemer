@@ -10,6 +10,7 @@ namespace Schemer;
 use Schemer\Exceptions\InvalidNodeException;
 use Schemer\Exceptions\InvalidSchemeDataException;
 use Schemer\Exceptions\ItemNotFoundException;
+use Schemer\Exceptions\SchemerException;
 use Schemer\Exceptions\UndeterminedPropertyException;
 use Schemer\Exceptions\ExistingPropertyNameException;
 use Nette\Utils\Strings;
@@ -233,6 +234,18 @@ class Node implements Arrayable, Jsonable
 	{
 		$item = $this->get($path, true);
 
+		if ($item instanceof Property && $item->isUniqueKey() && ($options = $item->isInOptions())) {
+			$lookFor = sprintf(
+				'[%s=%s]',
+				$item->getName(),
+				self::stripPropertyNameInValue($item->getName(), Options::serializeValue($value))
+			);
+
+			if ($options->tryFind($lookFor) instanceof Node) {
+				throw new SchemerException(sprintf("Cannot redefine value of existing unique key '%s'.", $item->getPath()));
+			}
+		}
+
 		if ($item instanceof Options) {
 			return ($return = $item->pick($value)) instanceof Node ? $return : $this;
 		}
@@ -242,6 +255,21 @@ class Node implements Arrayable, Jsonable
 		}
 
 		return $this;
+	}
+
+
+	/**
+	 * @param string $path
+	 * @return Node|null
+	 */
+	public function tryFind(string $path): ?Node
+	{
+		try {
+			return $this->find($path);
+
+		} catch (ItemNotFoundException $e) {
+			return null;
+		}
 	}
 
 
