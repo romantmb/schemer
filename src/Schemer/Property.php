@@ -330,5 +330,13 @@ class Property extends Node implements NamedNodeWithValue
 		foreach ($this->conditionalSiblings as & $sibling) {
 			$sibling = clone $sibling;
 		}
+
+		if ($this->valueProvider !== null) {
+			$this->valueProvider = clone $this->valueProvider;
+		}
+
+		if ($this->optionalValuesProvider !== null) {
+			$this->optionalValuesProvider = clone $this->optionalValuesProvider;
+		}
 	}
 }

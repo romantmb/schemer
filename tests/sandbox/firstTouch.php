@@ -8,6 +8,7 @@ use Schemer\Extensions\FormsForSchemer;
 use Schemer\Extensions\Transformers\SchemePathToInputNameTransformer;
 use Schemer\Node;
 use Schemer\Scheme;
+use Schemer\Validators\Inputs\NullableTextualInput;
 use Schemer\Validators\Inputs\NumericInput;
 use Schemer\Validators\Inputs\CustomInput;
 use Schemer\Exceptions\InvalidValueException;
@@ -194,6 +195,8 @@ final class SimpleTestCase
 
 					Scheme::prop('prizeId', PrizeIdentifierValidator::class)
 						->uniqueKey(),
+
+					Scheme::prop('title', NullableTextualInput::class),
 
 					Scheme::prop('trigger', [
 						'human',
