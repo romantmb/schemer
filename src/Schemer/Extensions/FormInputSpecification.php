@@ -44,6 +44,9 @@ class FormInputSpecification
 	/** @var object */
 	private $formControl;
 
+	/** @var bool */
+	private $valueProviderRefreshed = false;
+
 
 	/**
 	 * @param Property        $property
@@ -228,6 +231,8 @@ class FormInputSpecification
 	 */
 	public function getValue()
 	{
+		$this->refreshPropertyInValueProvider();
+
 		$value = $this->property->getValue();
 
 		if ($this->isSelect() && $this->property->isInOptions()) {
@@ -244,10 +249,11 @@ class FormInputSpecification
 	 */
 	public function getHumanValue(): string
 	{
-		if (($valueProvider = $this->property->getValueProvider()) && $valueProvider instanceof UserValueProvider) {
-			if (($value = $valueProvider->setProperty($this->property)->getHumanValue()) !== null) {
-				return $value;
-			}
+		$this->refreshPropertyInValueProvider();
+
+		if ($this->property->getValueProvider() instanceof UserValueProvider
+			&& ($value = $this->property->getValueProvider()->getHumanValue()) !== null) {
+			return $value;
 		}
 
 		if (is_array($value = $this->property->getValue())) {
@@ -356,5 +362,20 @@ class FormInputSpecification
 		}
 
 		return [];
+	}
+
+
+	private function refreshPropertyInValueProvider(): void
+	{
+		if ($this->valueProviderRefreshed === true) {
+			return;
+		}
+
+		if ($this->property->getValueProvider() instanceof ValueProvider) {
+			$this->property->getValueProvider()
+				->setProperty($this->getProperty());
+		}
+
+		$this->valueProviderRefreshed = true;
 	}
 }
