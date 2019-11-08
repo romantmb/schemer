@@ -7,12 +7,13 @@
 
 namespace Schemer;
 
+use Schemer\Support\Helpers;
 use Schemer\Exceptions\InvalidNodeException;
 use Schemer\Exceptions\UndeterminedPropertyException;
 use BadMethodCallException;
 
 
-class Property extends Node implements NamedNodeWithValue
+final class Property extends Node implements NamedNodeWithValue
 {
 	/** @var string */
 	private $name;
@@ -62,7 +63,7 @@ class Property extends Node implements NamedNodeWithValue
 	/**
 	 * @return bool
 	 */
-	public function isBag()
+	public function isBag(): bool
 	{
 		return !empty($this->children);
 	}
@@ -175,7 +176,7 @@ class Property extends Node implements NamedNodeWithValue
 	public function on(string $value, Node $node)
 	{
 		if (array_key_exists($value, $this->conditionalSiblings)) {
-			throw new InvalidNodeException(sprintf("Conditional %s for value %s already defined.", $node instanceof Group ? 'sibling' : 'siblings', self::export($value)));
+			throw new InvalidNodeException(sprintf("Conditional %s for value %s already defined.", $node instanceof Group ? 'sibling' : 'siblings', Helpers::export($value)));
 		}
 
 		$this->conditionalSiblings[$value] = $node;

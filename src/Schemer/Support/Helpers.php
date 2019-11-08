@@ -5,7 +5,7 @@
  * @author Roman Pistek
  */
 
-namespace Schemer;
+namespace Schemer\Support;
 
 
 class Helpers

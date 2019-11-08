@@ -58,7 +58,7 @@ class NullableArrayOf implements Input
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		foreach ($this->inputs as $input) {
 			if (!$input->isValid()) {
@@ -72,7 +72,7 @@ class NullableArrayOf implements Input
 	/**
 	 * @return bool
 	 */
-	function isUndefined()
+	function isUndefined(): bool
 	{
 		return $this->undefined;
 	}
@@ -81,7 +81,7 @@ class NullableArrayOf implements Input
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return false;
 	}
@@ -90,7 +90,7 @@ class NullableArrayOf implements Input
 	/**
 	 * @return bool
 	 */
-	function isNull()
+	function isNull(): bool
 	{
 		return $this->values === null;
 	}
@@ -99,7 +99,7 @@ class NullableArrayOf implements Input
 	/**
 	 * @return bool
 	 */
-	function isEmpty()
+	function isEmpty(): bool
 	{
 		return !$this->values;
 	}
@@ -122,7 +122,7 @@ class NullableArrayOf implements Input
 	/**
 	 * @return string|null
 	 */
-	function getName()
+	function getName(): ?string
 	{
 		return $this->name;
 	}
@@ -131,7 +131,7 @@ class NullableArrayOf implements Input
 	/**
 	 * @return string|null
 	 */
-	function getKey()
+	function getKey(): ?string
 	{
 		return $this->key;
 	}
@@ -140,7 +140,7 @@ class NullableArrayOf implements Input
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		foreach ($this->inputs as $index => $input) {
 			if (($issue = $input->getIssue()) !== null) {

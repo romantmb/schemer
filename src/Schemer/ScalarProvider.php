@@ -8,7 +8,7 @@
 namespace Schemer;
 
 
-class ScalarProvider implements ValueProvider
+final class ScalarProvider implements ValueProvider
 {
 	/** @var mixed */
 	private $value;

@@ -55,7 +55,7 @@ class UserValueProvider implements ValueProvider
 			return UserInputValidator::simple(
 				new $this->validatorClass(
 					$value,
-					sprintf("'%s'", $this->getProperty()->getPath())
+					$this->getProperty() !== null ? sprintf("'%s'", $this->getProperty()->getPath()) : null
 				)
 			);
 

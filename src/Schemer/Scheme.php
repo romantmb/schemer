@@ -52,7 +52,7 @@ class Scheme
 			return $property;
 		}
 
-		if (sizeof($content) > 1 || sizeof($content) === 1 && $content[0] instanceof NamedNode) {
+		if (count($content) > 1 || count($content) === 1 && $content[0] instanceof NamedNode) {
 
 			// property is a bag
 			self::fillBag($content, $property);
@@ -73,7 +73,7 @@ class Scheme
 	public static function options(string $name, ...$content): Options
 	{
 		return (new Options($name))
-			->setItems(sizeof($content) === 1 && (is_array($content[0]) || $content[0] instanceof ManyValuesProvider) ? $content[0] : $content);
+			->setItems(count($content) === 1 && (is_array($content[0]) || $content[0] instanceof ManyValuesProvider) ? $content[0] : $content);
 	}
 
 
@@ -87,7 +87,7 @@ class Scheme
 	public static function candidates(string $name, ...$content): Options
 	{
 		return (new Options($name))
-			->setCandidates(sizeof($content) === 1 && (is_array($content[0]) || $content[0] instanceof ManyValuesProvider) ? $content[0] : $content);
+			->setCandidates(count($content) === 1 && (is_array($content[0]) || $content[0] instanceof ManyValuesProvider) ? $content[0] : $content);
 	}
 
 

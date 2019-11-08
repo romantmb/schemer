@@ -19,7 +19,7 @@ class NullableBooleanInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		return is_bool($this->getValue()) || $this->isEmpty();
 	}
@@ -28,7 +28,7 @@ class NullableBooleanInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return true;
 	}
@@ -37,7 +37,7 @@ class NullableBooleanInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isEmpty()
+	function isEmpty(): bool
 	{
 		return $this->isNull();
 	}
@@ -56,7 +56,7 @@ class NullableBooleanInput extends BasicInput
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		if (!$this->isValid()) {
 			return sprintf('must be boolean, %s given', gettype($this->getValue()));

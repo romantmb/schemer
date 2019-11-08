@@ -22,7 +22,7 @@ class NullableDateTimeInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		try {
 			return DateTime::from($this->value) || $this->isEmpty();
@@ -36,7 +36,7 @@ class NullableDateTimeInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return true;
 	}
@@ -45,7 +45,7 @@ class NullableDateTimeInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isEmpty()
+	function isEmpty(): bool
 	{
 		return $this->isNull() || !$this->value;
 	}
@@ -64,7 +64,7 @@ class NullableDateTimeInput extends BasicInput
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		if (!$this->isValid()) {
 			if (is_int($this->value)) {

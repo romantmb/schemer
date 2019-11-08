@@ -22,37 +22,37 @@ use League\Fractal\TransformerAbstract;
 use InvalidArgumentException;
 
 
-class FormsForSchemer
+final class FormsForSchemer
 {
 	/** @var CollectionOfSchemeInputs */
-	protected $inputSpecs;
+	private $inputSpecs;
 
 	/** @var array[CollectionOfSchemeInputs] */
-	protected $fetchedInputSpecs = [
+	private $fetchedInputSpecs = [
 		'grouped' => null,
 		'flat'    => null,
 	];
 
 	/** @var string */
-	protected $slugTransformerClass;
+	private $slugTransformerClass;
 
 	/** @var callable */
-	protected $filter;
+	private $filter;
 
 	/** @var callable */
-	protected $mapper;
+	private $mapper;
 
 	/** @var FormExtender */
-	protected $formExtender;
+	private $formExtender;
 
 	/** @var callable */
-	protected $onValidate;
+	private $onValidate;
 
 	/** @var callable */
-	protected $onError;
+	private $onError;
 
 	/** @var callable */
-	protected $onSuccess;
+	private $onSuccess;
 
 
 	/**
@@ -140,16 +140,15 @@ class FormsForSchemer
 	{
 		$this->formExtender = $extender;
 
-		foreach ($this->fetch()->all() as $spec) {
-			/** @var FormInputSpecification $spec */
+		$this->fetch()->each(function(FormInputSpecification $spec) {
 
 			if ($spec->isSelect()) {
-				$extender->addSelect($spec);
+				$this->formExtender->addSelect($spec);
 
 			} else {
-				$extender->addText($spec);
+				$this->formExtender->addText($spec);
 			}
-		}
+		});
 
 		return $this;
 	}
@@ -249,7 +248,7 @@ class FormsForSchemer
 					call_user_func_array([ $uniqueKeys, 'put' ], explode('=', $key));
 				}
 
-			} catch (InvalidValueException | SchemerException $e) {
+			} catch (SchemerException $e) {
 				if ($this->onError !== null) {
 					($this->onError)($e, $spec, $value);
 					return;
@@ -311,7 +310,7 @@ class FormsForSchemer
 	 * @param FormInputSpecification $spec
 	 * @param mixed                  $value
 	 */
-	protected function validation(Node $scheme, FormInputSpecification $spec, $value)
+	private function validation(Node $scheme, FormInputSpecification $spec, $value)
 	{
 		$property = $spec->getProperty();
 
@@ -339,7 +338,7 @@ class FormsForSchemer
 	 * @param Node $node
 	 * @return CollectionOfSchemeInputs
 	 */
-	protected function findEditableNodesInScheme(Node $node): CollectionOfSchemeInputs
+	private function findEditableNodesInScheme(Node $node): CollectionOfSchemeInputs
 	{
 		$founds = new CollectionOfSchemeInputs;
 
@@ -397,7 +396,7 @@ class FormsForSchemer
 	}
 
 
-	protected function flush()
+	private function flush()
 	{
 		$this->fetchedInputSpecs = [ 'flat' => null, 'grouped' => null ];
 	}
@@ -407,7 +406,7 @@ class FormsForSchemer
 	 * @param CollectionOfSchemeInputs $specs
 	 * @return CollectionOfSchemeInputs
 	 */
-	protected function fetchSpecs(CollectionOfSchemeInputs $specs): CollectionOfSchemeInputs
+	private function fetchSpecs(CollectionOfSchemeInputs $specs): CollectionOfSchemeInputs
 	{
 		return $specs->mapWithKeys(function(FormInputSpecification $spec) {
 			return [ $spec->getInputName() => $spec ];
@@ -419,7 +418,7 @@ class FormsForSchemer
 	 * @param string $id
 	 * @return FormInputSpecification|null
 	 */
-	protected function getFetchedSpec(string $id): ?FormInputSpecification
+	private function getFetchedSpec(string $id): ?FormInputSpecification
 	{
 		if (($spec = $this->fetch()->get($id)) === null) {
 			if ($this->formExtender !== null) {

@@ -10,6 +10,6 @@ namespace Schemer\Exceptions;
 use LogicException;
 
 
-class SchemerException extends LogicException
+class StaticClassException extends LogicException
 {
 }

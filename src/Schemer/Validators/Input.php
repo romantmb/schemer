@@ -18,31 +18,31 @@ interface Input
 	/**
 	 * @return bool
 	 */
-	function isValid();
+	function isValid(): bool;
 
 
 	/**
 	 * @return bool
 	 */
-	function isUndefined();
+	function isUndefined(): bool;
 
 
 	/**
 	 * @return bool
 	 */
-	function isNullable();
+	function isNullable(): bool;
 
 
 	/**
 	 * @return bool
 	 */
-	function isNull();
+	function isNull(): bool;
 
 
 	/**
 	 * @return bool
 	 */
-	function isEmpty();
+	function isEmpty(): bool;
 
 
 	/**
@@ -55,17 +55,17 @@ interface Input
 	/**
 	 * @return string|null
 	 */
-	function getName();
+	function getName(): ?string;
 
 
 	/**
 	 * @return string|null
 	 */
-	function getKey();
+	function getKey(): ?string;
 
 
 	/**
 	 * @return string
 	 */
-	function getIssue();
+	function getIssue(): ?string;
 }

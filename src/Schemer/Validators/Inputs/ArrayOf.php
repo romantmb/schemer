@@ -19,7 +19,7 @@ class ArrayOf extends NullableArrayOf
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		return is_array($this->values) && parent::isValid();
 	}
@@ -28,7 +28,7 @@ class ArrayOf extends NullableArrayOf
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return true;
 	}
@@ -37,7 +37,7 @@ class ArrayOf extends NullableArrayOf
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		if ($this->isNull()) {
 			return 'must be defined as array.';

@@ -37,7 +37,7 @@ class NullableTextualInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		return is_string($this->value) || $this->isEmpty();
 	}
@@ -46,7 +46,7 @@ class NullableTextualInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return true;
 	}
@@ -55,7 +55,7 @@ class NullableTextualInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isEmpty()
+	function isEmpty(): bool
 	{
 		return $this->isNull() || $this->value === '';
 	}
@@ -74,7 +74,7 @@ class NullableTextualInput extends BasicInput
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		if (!$this->isValid()) {
 			return sprintf('must be a string, %s given', gettype($this->value));

@@ -19,7 +19,7 @@ use Nette\InvalidArgumentException;
  *
  * @author Roman Pistek
  */
-class BasicInput implements Input
+abstract class BasicInput implements Input
 {
 	/** @var mixed */
 	protected $value;
@@ -43,7 +43,7 @@ class BasicInput implements Input
 	 */
 	public function __construct($value, $name = null)
 	{
-		if (is_array($value) && sizeof($value) === 2
+		if (is_array($value) && count($value) === 2
 			&& ($def = array_values($value)) && is_array($def[0]) && is_string($def[1])) {
 
 			list($data, $key) = $value;
@@ -111,7 +111,7 @@ class BasicInput implements Input
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		return !$this->isUndefined();
 	}
@@ -120,7 +120,7 @@ class BasicInput implements Input
 	/**
 	 * @return bool
 	 */
-	function isUndefined()
+	function isUndefined(): bool
 	{
 		return $this->undefined;
 	}
@@ -129,7 +129,7 @@ class BasicInput implements Input
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return false;
 	}
@@ -138,7 +138,7 @@ class BasicInput implements Input
 	/**
 	 * @return bool
 	 */
-	function isNull()
+	function isNull(): bool
 	{
 		return $this->value === null;
 	}
@@ -147,7 +147,7 @@ class BasicInput implements Input
 	/**
 	 * @return bool
 	 */
-	function isEmpty()
+	function isEmpty(): bool
 	{
 		return !$this->value || $this->isUndefined();
 	}
@@ -167,7 +167,7 @@ class BasicInput implements Input
 	/**
 	 * @return string|null
 	 */
-	function getName()
+	function getName(): ?string
 	{
 		return $this->name;
 	}
@@ -176,7 +176,7 @@ class BasicInput implements Input
 	/**
 	 * @return string|null
 	 */
-	function getKey()
+	function getKey(): ?string
 	{
 		return $this->key ?: null;
 	}
@@ -185,7 +185,7 @@ class BasicInput implements Input
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		return null;
 	}

@@ -7,6 +7,7 @@
 
 namespace Schemer;
 
+use Schemer\Support\Helpers;
 use Schemer\Exceptions\InvalidValueException;
 use Nette\Utils\Arrays;
 
@@ -44,7 +45,7 @@ class StaticArrayProvider implements ManyValuesProvider
 			throw new InvalidValueException(sprintf(
 				"Value %s%s does not match optional values [ %s ].",
 				Helpers::export($value),
-				sprintf(" for property '%s'", $this->getProperty()->getName()),
+				$this->getProperty() !== null ? sprintf(" for property '%s'", $this->getProperty()->getName()) : '',
 				Helpers::export($this->getValues())
 			));
 		}
@@ -120,7 +121,7 @@ class StaticArrayProvider implements ManyValuesProvider
 		}
 
 		if (in_array($value, [ 'true', 'false' ])) {
-			return $value === 'true' ? true : false;
+			return $value === 'true';
 		}
 
 		return $value;

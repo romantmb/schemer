@@ -62,7 +62,7 @@ class CustomInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		return is_callable($cbValidator = $this->validator)
 			? $cbValidator($this->value) : $this->validator();
@@ -72,7 +72,7 @@ class CustomInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return true;
 	}
@@ -81,7 +81,7 @@ class CustomInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isEmpty()
+	function isEmpty(): bool
 	{
 		return $this->isNull() || $this->value === '';
 	}
@@ -100,7 +100,7 @@ class CustomInput extends BasicInput
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		if (!$this->isValid()) {
 			return sprintf("value ('%s') is not valid", $this->value);

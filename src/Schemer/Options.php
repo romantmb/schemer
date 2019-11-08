@@ -15,7 +15,7 @@ use Schemer\Exceptions\UndeterminedPropertyException;
 use Illuminate\Support\Collection;
 
 
-class Options extends Node implements NamedNode
+final class Options extends Node implements NamedNode
 {
 	/** @var string */
 	private $name;
@@ -143,19 +143,19 @@ class Options extends Node implements NamedNode
 		if ($this->containsPrimitives()) {
 			return collect([
 				'key' => collect($this->candidates)
-					->map(function(ArrayItem $item) { return $item->getKey(); })
+					->map(static function(ArrayItem $item) { return $item->getKey(); })
 					->all()
 			]);
 		}
 
 		/** @var Collection $candidates */
 		$candidates = collect($this->candidates)
-			->map(function(Node $item) { return $item->getChildren(); })
+			->map(static function(Node $item) { return $item->getChildren(); })
 			->flatten()
-			->filter(function(Property $property) {
+			->filter(static function(Property $property) {
 				return !$property->isBag();
 			})
-			->mapWithKeys(function(Property $property) {
+			->mapWithKeys(static function(Property $property) {
 				return [ $property->getName() => $property->getValueProvider() ];
 			});
 
@@ -227,7 +227,7 @@ class Options extends Node implements NamedNode
 	public function pick($definition, $value = null, $checkIfExistsOnly = false)
 	{
 		if (strpos($definition, '=') !== false) {
-			list($definition, $value) = explode('=', $definition);
+			[ $definition, $value ] = explode('=', $definition);
 		}
 
 		$def = implode('=',
@@ -235,7 +235,7 @@ class Options extends Node implements NamedNode
 			+ ($value === null ? [] : [ 1 => self::serializeValue($value) ])
 		);
 
-		if ($this->containsPrimitives() && $value !== null) {
+		if ($value !== null && $this->containsPrimitives()) {
 			$definition = $value;
 		}
 
@@ -469,7 +469,7 @@ class Options extends Node implements NamedNode
 			$item = new ArrayItem($item, $key);
 		}
 
-		if (!in_array(get_class($item), [ Node::class, ArrayItem::class ])) {
+		if (!in_array(get_class($item), [ Node::class, ArrayItem::class ], true)) {
 			throw new InvalidValueException('Options must be defined as a primitive array or a bag of properties (inside Scheme::bag()).');
 		}
 
@@ -517,7 +517,9 @@ class Options extends Node implements NamedNode
 		if ($uniqueKeyCount === 0) {
 			throw new InvalidUniqueKeyException(sprintf("One of the properties in '%s' must be set as unique key. (Use uniqueKey() marker.)", $this->getPath()));
 
-		} elseif ($uniqueKeyCount > 1) {
+		}
+
+		if ($uniqueKeyCount > 1) {
 			throw new InvalidUniqueKeyException('Multiple unique keys are not implemented yet.');
 		}
 	}
@@ -533,10 +535,9 @@ class Options extends Node implements NamedNode
 
 		if ($this->associative !== null && $this->associative !== !!$key) {
 			throw new InvalidValueException('Cannot mix associative and non-associative keys.');
-
-		} else {
-			$this->associative = !!$key;
 		}
+
+		$this->associative = !!$key;
 
 		return $key;
 	}
@@ -550,8 +551,9 @@ class Options extends Node implements NamedNode
 	{
 		if ($item instanceof Node) {
 			return 'node';
+		}
 
-		} elseif ($item instanceof ArrayItem) {
+		if ($item instanceof ArrayItem) {
 			return gettype($item->getValue());
 		}
 

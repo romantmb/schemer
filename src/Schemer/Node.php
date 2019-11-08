@@ -470,7 +470,7 @@ class Node implements Arrayable, Jsonable
 	protected function collection()
 	{
 		return collect($this->getChildren(false))
-			->mapWithKeys(function(Node $node) {
+			->mapWithKeys(static function(Node $node) {
 				if ($node instanceof NamedNode) {
 					return [ $node->getName() => $node->toArray() ];
 				}

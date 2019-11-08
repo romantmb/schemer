@@ -33,7 +33,7 @@ class NullableNumericInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		return is_int($this->value) || is_float($this->value) || $this->isEmpty();
 	}
@@ -42,7 +42,7 @@ class NullableNumericInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return true;
 	}
@@ -51,7 +51,7 @@ class NullableNumericInput extends BasicInput
 	/**
 	 * @return bool
 	 */
-	function isEmpty()
+	function isEmpty(): bool
 	{
 		return $this->isNull() || $this->value === 0 || $this->value === 0.0;
 	}
@@ -70,7 +70,7 @@ class NullableNumericInput extends BasicInput
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		if (!$this->isValid()) {
 			return sprintf('must be numeric, %s given', gettype($this->value));

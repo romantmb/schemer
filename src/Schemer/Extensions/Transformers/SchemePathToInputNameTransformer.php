@@ -7,20 +7,14 @@
 
 namespace Schemer\Extensions\Transformers;
 
-use Nette\StaticClassException;
+use Schemer\Support\StaticClass;
 use Tuupola\Base58;
 
 
-class SchemePathToInputNameTransformer
+class SchemePathToInputNameTransformer extends StaticClass
 {
 	/** @const string */
 	const INPUT_PREFIX = 'scheme__' ;
-
-
-	public function __construct()
-	{
-		throw new StaticClassException(sprintf('Methods in %s are for static call only.', self::class));
-	}
 
 
 	/**

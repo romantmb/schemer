@@ -13,13 +13,13 @@ namespace Schemer\Validators\Inputs;
  *
  * @author Roman Pistek
  */
-class TextualInput extends NullableTextualInput
+final class TextualInput extends NullableTextualInput
 {
 
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		return !$this->isEmpty() && parent::isValid();
 	}
@@ -28,7 +28,7 @@ class TextualInput extends NullableTextualInput
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return false;
 	}
@@ -37,7 +37,7 @@ class TextualInput extends NullableTextualInput
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		if ($this->isUndefined()) {
 			return 'must be defined';

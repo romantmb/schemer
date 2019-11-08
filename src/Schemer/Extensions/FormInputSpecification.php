@@ -7,15 +7,15 @@
 
 namespace Schemer\Extensions;
 
-use Schemer\Extensions\Transformers\SchemePathToInputNameTransformer;
-use Schemer\ManyValuesProvider;
 use Schemer\Property;
 use Schemer\Options;
+use Schemer\ValueProvider;
+use Schemer\ManyValuesProvider;
 use Schemer\UserValueProvider;
+use Schemer\Extensions\Transformers\SchemePathToInputNameTransformer;
 use Schemer\Exceptions\SchemerException;
 use Schemer\Exceptions\InvalidNodeException;
-use Schemer\ValueProvider;
-use Exception;
+use Schemer\Exceptions\InvalidValueException;
 
 
 class FormInputSpecification
@@ -67,7 +67,7 @@ class FormInputSpecification
 
 		} else {
 			$valueProvider = $property->getValueProvider();
-			$invalid = is_object($valueProvider) ? ('instance of ' . get_class($valueProvider)) : gettype($valueProvider);
+			$invalid = is_object($valueProvider) ? sprintf('instance of %s', get_class($valueProvider)) : gettype($valueProvider);
 			throw new InvalidNodeException(sprintf('Array with options or an UserValueProvider expected, %s given.', $invalid));
 		}
 	}
@@ -100,7 +100,7 @@ class FormInputSpecification
 				(clone $this->property->getValueProvider())->setValue(null);
 				return $this->required = false;
 
-			} catch (Exception $e) {
+			} catch (InvalidValueException $e) {
 				return $this->required = true;
 			}
 		}

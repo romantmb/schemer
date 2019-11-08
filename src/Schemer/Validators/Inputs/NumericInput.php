@@ -13,13 +13,13 @@ namespace Schemer\Validators\Inputs;
  *
  * @author Roman Pistek
  */
-class NumericInput extends NullableNumericInput
+final class NumericInput extends NullableNumericInput
 {
 
 	/**
 	 * @return bool
 	 */
-	function isValid()
+	function isValid(): bool
 	{
 		return !$this->isEmpty() && parent::isValid();
 	}
@@ -28,7 +28,7 @@ class NumericInput extends NullableNumericInput
 	/**
 	 * @return bool
 	 */
-	function isNullable()
+	function isNullable(): bool
 	{
 		return false;
 	}
@@ -37,7 +37,7 @@ class NumericInput extends NullableNumericInput
 	/**
 	 * @return string|null
 	 */
-	function getIssue()
+	function getIssue(): ?string
 	{
 		if ($this->isUndefined()) {
 			return 'must be defined';
