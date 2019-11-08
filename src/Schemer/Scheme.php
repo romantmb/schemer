@@ -48,14 +48,17 @@ class Scheme
 		$property = new Property($name);
 
 		if (empty($content)) {
+
 			// property with null value
 			return $property;
 		}
 
-		if (count($content) > 1 || count($content) === 1 && $content[0] instanceof NamedNode) {
+		if (count($content) > 1
+			|| count($content) === 1 && $content[0] instanceof NamedNode) {
 
 			// property is a bag
 			self::fillBag($content, $property);
+
 			return $property;
 		}
 

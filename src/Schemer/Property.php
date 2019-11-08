@@ -27,6 +27,9 @@ final class Property extends Node implements NamedNodeWithValue
 	/** @var mixed|null */
 	private $value;
 
+	/** @var mixed */
+	private $defaultValue;
+
 	/** @var Node[] */
 	private $conditionalSiblings = [];
 
@@ -140,6 +143,30 @@ final class Property extends Node implements NamedNodeWithValue
 
 
 	/**
+	 * @param mixed $value
+	 * @return static
+	 */
+	public function setDefaultValue($value): self
+	{
+		$this->defaultValue = $value;
+
+		return $this;
+	}
+
+
+	/**
+	 * Shortcut of setDefaultValue()
+	 *
+	 * @param mixed $value
+	 * @return static
+	 */
+	public function default($value): self
+	{
+		return $this->setDefaultValue($value);
+	}
+
+
+	/**
 	 * @return mixed|null
 	 */
 	public function getValue()
@@ -148,11 +175,11 @@ final class Property extends Node implements NamedNodeWithValue
 			return null;
 		}
 
-		if ($this->value === null && $this->valueProvider instanceof ValueProvider) {
-			return $this->valueProvider->getValue();
+		if (($value = $this->value) === null && $this->valueProvider instanceof ValueProvider) {
+			$value = $this->valueProvider->getValue();
 		}
 
-		return $this->value;
+		return $value !== null ? $value : $this->defaultValue;
 	}
 
 

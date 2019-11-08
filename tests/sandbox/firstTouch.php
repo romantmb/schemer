@@ -196,7 +196,8 @@ final class SimpleTestCase
 					Scheme::prop('prizeId', PrizeIdentifierValidator::class)
 						->uniqueKey(),
 
-					Scheme::prop('title', NullableTextualInput::class),
+					Scheme::prop('title', NullableTextualInput::class)
+						->default('(default title)'),
 
 					Scheme::prop('trigger', [
 						'human',
@@ -208,6 +209,7 @@ final class SimpleTestCase
 						'nth',
 						'jury',
 					])
+						->default('random')
 
 						->on('nth', Scheme::group(
 
@@ -319,7 +321,7 @@ final class SimpleTestCase
 
 		$draws->pick('prizeId', [ 1, 2, 3 ])
 			->set('trigger', 'human')
-			->set('mechanics', 'random')
+			//->set('mechanics', 'random')
 			->set('interval.first', '<dayAfter> 12:00:00');
 
 		$draws->set('[prizeId=1,2,3].interval.repeatEvery', 'week');
