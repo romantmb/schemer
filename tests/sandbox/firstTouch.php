@@ -131,7 +131,7 @@ final class SimpleFormBuilder implements FormExtender
 	public function addSwitch(FormInputSpecification $spec)
 	{
 		$input = sprintf(
-			'<input type="checkbox" name="%s" value="1"%s%s>',
+			'<input type="checkbox" name="%s" value="true"%s%s>',
 			$spec->getInputName(),
 			$spec->getValue() === true ? ' checked' : '',
 			$spec->isDisabled() ? ' disabled' : ''
@@ -204,8 +204,6 @@ final class SimpleTestCase
 
 			// just for purposes of this test
 			Scheme::prop('schemeId', 'one'),
-
-			Scheme::prop('agree', NullableBooleanInput::class),
 
 			Scheme::candidates('draws',
 
@@ -400,9 +398,16 @@ final class SimpleTestCase
 
 	private static function handleSchemeUpdate(Node $scheme)
 	{
-		$values = array_filter($_POST, function($_, $key) {
+		$values = array_filter($_POST, function(& $value, $key) {
 			return strpos($key, SchemePathToInputNameTransformer::INPUT_PREFIX) === 0;
 		},ARRAY_FILTER_USE_BOTH);
+
+		$values = array_map(function($value) {
+			if (in_array($value, [ 'true', 'false' ], true)) {
+				$value = $value === 'true';
+			}
+			return $value;
+		}, $values);
 
 		(new FormsForSchemer)
 			->fromScheme($scheme)
