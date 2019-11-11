@@ -41,7 +41,7 @@ class StaticArrayProvider implements ManyValuesProvider
 	 */
 	public function setValue($value)
 	{
-		if ($value !== null && !in_array($value = self::sanitizeValue($value), $this->getValues(), true)) {
+		if ($value !== null && !in_array($value = Helpers::sanitizeValue($value), $this->getValues(), true)) {
 			throw new InvalidValueException(sprintf(
 				"Value %s%s does not match optional values [ %s ].",
 				Helpers::export($value),
@@ -99,31 +99,5 @@ class StaticArrayProvider implements ManyValuesProvider
 	public function getProperty(): ?Property
 	{
 		return $this->property;
-	}
-
-
-	/**
-	 * @param mixed $value
-	 * @return mixed
-	 */
-	private static function sanitizeValue($value)
-	{
-		if (!is_string($value)) {
-			return $value;
-		}
-
-		if (is_numeric($value)) {
-			return strpos($value, '.') ? (float) $value : (int) $value;
-		}
-
-		if ($value === 'null' || $value === '') {
-			return null;
-		}
-
-		if (in_array($value, [ 'true', 'false' ])) {
-			return $value === 'true';
-		}
-
-		return $value;
 	}
 }
