@@ -88,9 +88,12 @@ final class Group extends Node implements Iterator
 	}
 
 
-	public function toArray()
+	/**
+	 * @return array
+	 */
+	public function toArray(): array
 	{
-		throw new BadMethodCallException('Cannot export scheme group into array.');
+		return $this->siblings;
 	}
 
 
