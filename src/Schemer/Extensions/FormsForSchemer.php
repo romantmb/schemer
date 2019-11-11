@@ -145,6 +145,9 @@ final class FormsForSchemer
 			if ($spec->isSelect()) {
 				$this->formExtender->addSelect($spec);
 
+			} elseif ($spec->isSwitch()) {
+				$this->formExtender->addSwitch($spec);
+
 			} else {
 				$this->formExtender->addText($spec);
 			}

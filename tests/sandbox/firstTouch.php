@@ -8,6 +8,8 @@ use Schemer\Extensions\FormsForSchemer;
 use Schemer\Extensions\Transformers\SchemePathToInputNameTransformer;
 use Schemer\Node;
 use Schemer\Scheme;
+use Schemer\Validators\Inputs\BooleanInput;
+use Schemer\Validators\Inputs\NullableBooleanInput;
 use Schemer\Validators\Inputs\NullableTextualInput;
 use Schemer\Validators\Inputs\NumericInput;
 use Schemer\Validators\Inputs\CustomInput;
@@ -126,6 +128,20 @@ final class SimpleFormBuilder implements FormExtender
 			. '<br>' . $input . '<br><br>';
 	}
 
+	public function addSwitch(FormInputSpecification $spec)
+	{
+		$input = sprintf(
+			'<input type="checkbox" name="%s" value="1"%s%s>',
+			$spec->getInputName(),
+			$spec->getValue() === true ? ' checked' : '',
+			$spec->isDisabled() ? ' disabled' : ''
+		);
+
+		$this->form .=
+			sprintf('<label for="%s">%s</label>', $spec->getInputName(), ucfirst($spec->getLabel()))
+			. '<br>' . $input . '<br><br>';
+	}
+
 	public function addText(FormInputSpecification $spec)
 	{
 		$input = sprintf(
@@ -188,6 +204,8 @@ final class SimpleTestCase
 
 			// just for purposes of this test
 			Scheme::prop('schemeId', 'one'),
+
+			Scheme::prop('agree', NullableBooleanInput::class),
 
 			Scheme::candidates('draws',
 
