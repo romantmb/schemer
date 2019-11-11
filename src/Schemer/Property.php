@@ -7,6 +7,7 @@
 
 namespace Schemer;
 
+use Schemer\Exceptions\InvalidValueException;
 use Schemer\Support\Helpers;
 use Schemer\Exceptions\InvalidNodeException;
 use Schemer\Exceptions\UndeterminedPropertyException;
@@ -200,13 +201,19 @@ final class Property extends Node implements NamedNodeWithValue
 	 * @return Property
 	 * @throws InvalidNodeException
 	 */
-	public function on(string $value, Node $node)
+	public function on($value, Node $node)
 	{
-		if (array_key_exists($value, $this->conditionalSiblings)) {
+		if (!is_scalar($value)) {
+			throw new InvalidValueException(sprintf('Conditional value must be scalar, %s given.'. gettype($value)));
+		}
+
+		$key = Helpers::export($value);
+
+		if (array_key_exists($key, $this->conditionalSiblings)) {
 			throw new InvalidNodeException(sprintf("Conditional %s for value %s already defined.", $node instanceof Group ? 'sibling' : 'siblings', Helpers::export($value)));
 		}
 
-		$this->conditionalSiblings[$value] = $node;
+		$this->conditionalSiblings[$key] = $node;
 
 		return $this;
 	}
@@ -235,7 +242,8 @@ final class Property extends Node implements NamedNodeWithValue
 			throw new UndeterminedPropertyException(sprintf("Cannot get conditional siblings, optional value of property '%s' is not specified.", $this->getName()));
 		}
 
-		$siblings = @$this->conditionalSiblings[$value] ?: [];
+		$key = Helpers::export($value);
+		$siblings = @$this->conditionalSiblings[$key] ?: [];
 
 		if (($group = $siblings) instanceof Group) {
 			$siblings = [];
