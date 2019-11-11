@@ -107,6 +107,10 @@ class FormInputSpecification
 			return $this->required;
 		}
 
+		if ($this->isSwitch()) {
+			return false; // switch must be set explicitly via setAsRequired()
+		}
+
 		if ($this->isSelect()) {
 			return $this->required = $this->property->isUniqueKey() || $this->property->hasAnyConditionalSiblings();
 		}
