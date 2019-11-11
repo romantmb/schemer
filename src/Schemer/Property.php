@@ -203,11 +203,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 */
 	public function on($value, Node $node)
 	{
-		if (!is_scalar($value)) {
-			throw new InvalidValueException(sprintf('Conditional value must be scalar, %s given.'. gettype($value)));
-		}
-
-		$key = Helpers::export($value);
+		$key = self::getConditionalKey($value);
 
 		if (array_key_exists($key, $this->conditionalSiblings)) {
 			throw new InvalidNodeException(sprintf("Conditional %s for value %s already defined.", $node instanceof Group ? 'sibling' : 'siblings', Helpers::export($value)));
@@ -242,17 +238,20 @@ final class Property extends Node implements NamedNodeWithValue
 			throw new UndeterminedPropertyException(sprintf("Cannot get conditional siblings, optional value of property '%s' is not specified.", $this->getName()));
 		}
 
-		$key = Helpers::export($value);
-		$siblings = @$this->conditionalSiblings[$key] ?: [];
+		$siblings = @$this->conditionalSiblings[self::getConditionalKey($value)] ?: [];
 
 		if (($group = $siblings) instanceof Group) {
-			$siblings = [];
-			foreach ($group as $member) {
-				/** @var Property $member */
-				$siblings[] = $member
-					->setParent($this->getParent())
-					->updateParentalLinks();
-			}
+			$siblings = collect($group)->flatten()->all();
+
+		} elseif ($siblings instanceof Node) {
+			$siblings = [ $siblings ];
+		}
+
+		foreach ($siblings as $sibling) {
+			/** @var Property $member */
+			$sibling
+				->setParent($this->getParent())
+				->updateParentalLinks();
 		}
 
 		return $siblings;
@@ -374,5 +373,19 @@ final class Property extends Node implements NamedNodeWithValue
 		if ($this->optionalValuesProvider !== null) {
 			$this->optionalValuesProvider = clone $this->optionalValuesProvider;
 		}
+	}
+
+
+	/**
+	 * @param mixed $value
+	 * @return string
+	 */
+	private static function getConditionalKey($value): string
+	{
+		if (!is_scalar($value)) {
+			throw new InvalidValueException(sprintf('Conditional value must be scalar, %s given.'. gettype($value)));
+		}
+
+		return trim(Helpers::export($value), '\'"');
 	}
 }
