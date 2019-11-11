@@ -20,6 +20,12 @@ interface FormExtender
 	/**
 	 * @param FormInputSpecification $spec
 	 */
+	public function addSwitch(FormInputSpecification $spec);
+
+
+	/**
+	 * @param FormInputSpecification $spec
+	 */
 	public function addText(FormInputSpecification $spec);
 
 

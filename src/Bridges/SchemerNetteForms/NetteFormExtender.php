@@ -46,6 +46,20 @@ final class NetteFormExtender implements FormExtender
 	/**
 	 * @param FormInputSpecification $spec
 	 */
+	public function addSwitch(FormInputSpecification $spec)
+	{
+		$control = $this->form->addCheckbox($spec->getInputName(), $spec->getLabel())
+			->setRequired($spec->isRequired())
+			->setDisabled($spec->isDisabled())
+			->setDefaultValue($spec->getValue());
+
+		$spec->setFormControl($control);
+	}
+
+
+	/**
+	 * @param FormInputSpecification $spec
+	 */
 	public function addText(FormInputSpecification $spec)
 	{
 		$control = $this->form->addText($spec->getInputName(), $spec->getLabel())

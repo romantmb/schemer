@@ -9,6 +9,7 @@ namespace Schemer\Extensions;
 
 use Schemer\Property;
 use Schemer\Options;
+use Schemer\Validators\Inputs\NullableBooleanInput;
 use Schemer\ValueProvider;
 use Schemer\ManyValuesProvider;
 use Schemer\UserValueProvider;
@@ -62,8 +63,14 @@ class FormInputSpecification
 		if (is_array($property->getValueProvider()) || !empty($property->getOptionalValues())) {
 			$this->type = 'select';
 
-		} elseif ($property->getValueProvider() instanceof UserValueProvider) {
-			$this->type = 'text';
+		} elseif (($userValueProvider = $property->getValueProvider())  && $userValueProvider instanceof UserValueProvider) {
+
+			if (is_a($userValueProvider->getValidatorClass(), NullableBooleanInput::class, true)) {
+				$this->type = 'switch';
+
+			} else {
+				$this->type = 'text';
+			}
 
 		} else {
 			$valueProvider = $property->getValueProvider();
@@ -79,6 +86,15 @@ class FormInputSpecification
 	public function isSelect(): bool
 	{
 		return $this->type === 'select';
+	}
+
+
+	/**
+	 * @return bool
+	 */
+	public function isSwitch(): bool
+	{
+		return $this->type === 'switch';
 	}
 
 
