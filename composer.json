@@ -27,7 +27,7 @@
 		"php": "^7.1",
 		"illuminate/support": "^5.5",
 		"league/fractal": "^0.17",
-		"nette/utils": "^2.4",
+		"nette/utils": "^2.4 || ^3.0",
 		"tuupola/base58": "^2.0"
 	},
 	"require-dev": {
