@@ -314,8 +314,9 @@ final class Property extends Node implements NamedNodeWithValue
 
 	/**
 	 * @return Node[]
+	 * @noinspection PhpUnused
 	 */
-	public function getUndeterminedSiblings()
+	public function getUndeterminedSiblings(): array
 	{
 		return $this->conditionalSiblings;
 	}
@@ -365,6 +366,7 @@ final class Property extends Node implements NamedNodeWithValue
 		foreach ($this->conditionalSiblings as & $sibling) {
 			$sibling = clone $sibling;
 		}
+		unset($sibling);
 
 		if ($this->valueProvider !== null) {
 			$this->valueProvider = clone $this->valueProvider;

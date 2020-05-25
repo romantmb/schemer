@@ -279,6 +279,7 @@ class Node implements Arrayable, Jsonable
 	 * @param string $path
 	 * @param mixed  $value
 	 * @return static
+	 * @noinspection PhpUnused
 	 */
 	public function trySet(string $path, $value): self
 	{
@@ -311,10 +312,10 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * @param string|array $data
+	 * @param mixed $data
 	 * @return Node
 	 */
-	public function initialize($data)
+	public function initialize($data): Node
 	{
 		$this->fillNodeWithData($data);
 
@@ -380,6 +381,7 @@ class Node implements Arrayable, Jsonable
 
 	/**
 	 * @return string
+	 * @noinspection PhpUnused
 	 */
 	public function getHash(): string
 	{
@@ -388,7 +390,7 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * @return array
+	 * @return mixed
 	 * @throws UndeterminedPropertyException
 	 */
 	public function toArray()
@@ -399,7 +401,7 @@ class Node implements Arrayable, Jsonable
 
 	/**
 	 * @param int $options
-	 * @return string
+	 * @return mixed
 	 * @throws UndeterminedPropertyException
 	 */
 	public function toJson($options = 0)
@@ -418,7 +420,7 @@ class Node implements Arrayable, Jsonable
 		$node = $node ?: $this;
 
 		foreach ($node->getChildren() as $child) {
-			if ($child instanceof Node) {
+			if ($child instanceof self) {
 				$child->setParent($node);
 				$this->updateParentalLinks($child);
 			}
@@ -432,26 +434,12 @@ class Node implements Arrayable, Jsonable
 	 * @param array|string $data
 	 * @param Node|null    $node
 	 */
-	protected function fillNodeWithData($data, Node $node = null)
+	protected function fillNodeWithData($data, Node $node = null): void
 	{
-		$node = $node ?: $this;
-
-		if ($node->getParent() === null && is_string($data)) {
-			try {
-				$data = Json::decode($data);
-
-			} catch (JsonException $e) {
-				throw new InvalidSchemeDataException('JSON data for scheme initialization are corrupted.', 0, $e);
-			}
-		}
-
-		if (!is_array($data) && (!is_object($data) || get_class($data) !== stdClass::class)) {
-			$invalid = is_object($data) ? ('instance of ' . get_class($data)) : gettype($data);
-			throw new InvalidSchemeDataException(sprintf('Data for scheme initialization must be JSON, array or stdClass, %s given.', $invalid), 0);
-		}
+		$data = $this->prepareData($data, $node);
 
 		foreach ($data as $name => $content) {
-			$item = $node->get($name);
+			$item = ($node ?? $this)->get($name);
 
 			if ($item instanceof Property && !$item->isBag()) {
 				$item->setValue($content);
@@ -467,7 +455,7 @@ class Node implements Arrayable, Jsonable
 	 * @return Collection
 	 * @throws UndeterminedPropertyException
 	 */
-	protected function collection()
+	protected function collection(): Collection
 	{
 		return collect($this->getChildren(false))
 			->mapWithKeys(static function(Node $node) {
@@ -476,6 +464,31 @@ class Node implements Arrayable, Jsonable
 				}
 				return [ $node->toArray() ];
 			});
+	}
+
+
+	/**
+	 * @param mixed $data
+	 * @param Node|null $node
+	 * @return mixed
+	 */
+	protected function prepareData($data, Node $node = null)
+	{
+		if (is_string($data) && ($node ?? $this)->getParent() === null) {
+			try {
+				$data = Json::decode($data);
+
+			} catch (JsonException $e) {
+				throw new InvalidSchemeDataException('JSON data for scheme initialization are corrupted.', 0, $e);
+			}
+		}
+
+		if (! is_array($data) && (! is_object($data) || get_class($data) !== stdClass::class)) {
+			$invalid = is_object($data) ? ('instance of ' . get_class($data)) : gettype($data);
+			throw new InvalidSchemeDataException(sprintf('Data for scheme initialization must be JSON, array or stdClass, %s given.', $invalid), 0);
+		}
+
+		return $data;
 	}
 
 
