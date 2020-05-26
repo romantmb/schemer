@@ -5,6 +5,8 @@
  * @author Roman Pistek
  */
 
+declare(strict_types=1);
+
 namespace Schemer\Validators;
 
 use Schemer\Support\Strings;

@@ -5,6 +5,8 @@
  * @author Roman Pistek
  */
 
+declare(strict_types=1);
+
 namespace Schemer;
 
 use Schemer\Validators\Input;
@@ -43,7 +45,7 @@ class Scheme
 	 * @param  mixed  $content
 	 * @return Property
 	 */
-	public static function prop(string $name, ...$content)
+	public static function prop(string $name, ...$content): Property
 	{
 		$property = new Property($name);
 
@@ -54,7 +56,7 @@ class Scheme
 		}
 
 		if (count($content) > 1
-			|| count($content) === 1 && $content[0] instanceof NamedNode) {
+			|| (count($content) === 1 && $content[0] instanceof NamedNode)) {
 
 			// property is a bag
 			self::fillBag($content, $property);
@@ -98,7 +100,7 @@ class Scheme
 	 * @param  mixed ...$content
 	 * @return Group
 	 */
-	public static function group(...$content)
+	public static function group(...$content): Group
 	{
 		return new Group($content);
 	}
@@ -126,9 +128,9 @@ class Scheme
 	/**
 	 * @param  Property $property
 	 * @param  mixed    $value
-	 * @return mixed
+	 * @return Property
 	 */
-	private static function initializePropertyValue(Property $property, $value)
+	private static function initializePropertyValue(Property $property, $value): Property
 	{
 		if (is_array($value)) {
 			return $property->setOptionalValues(new StaticArrayProvider($value));

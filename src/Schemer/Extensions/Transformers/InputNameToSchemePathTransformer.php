@@ -5,6 +5,8 @@
  * @author Roman Pistek
  */
 
+declare(strict_types=1);
+
 namespace Schemer\Extensions\Transformers;
 
 use Schemer\Support\StaticClass;

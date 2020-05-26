@@ -5,6 +5,8 @@
  * @author Roman Pistek
  */
 
+declare(strict_types=1);
+
 namespace Schemer;
 
 use Schemer\Support\Helpers;
@@ -15,7 +17,7 @@ use Nette\Utils\Arrays;
 class StaticArrayProvider implements ManyValuesProvider
 {
 	/** @var array */
-	private $values = [];
+	private $values;
 
 	/** @var Property */
 	private $property;
