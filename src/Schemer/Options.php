@@ -13,8 +13,11 @@ use Schemer\Exceptions\InvalidNodeException;
 use Schemer\Exceptions\InvalidValueException;
 use Schemer\Exceptions\ItemNotFoundException;
 use Schemer\Exceptions\InvalidUniqueKeyException;
+use Schemer\Exceptions\SchemerException;
 use Schemer\Exceptions\UndeterminedPropertyException;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
+use stdClass;
 
 
 final class Options extends Node implements NamedNode
@@ -70,11 +73,28 @@ final class Options extends Node implements NamedNode
 
 
 	/**
+	 * @return bool
+	 */
+	public function isBlank(): bool
+	{
+		return empty($this->items) && empty($this->candidates);
+	}
+
+
+	/**
 	 * @param  mixed $items
 	 * @return static
 	 */
 	public function setItems($items)
 	{
+		if (! is_array($items) && ! $items instanceof ManyValuesProvider) {
+			throw new InvalidArgumentException(sprintf(
+				'Items must be an array or an instance of %s, %s given.',
+				ManyValuesProvider::class,
+				is_object($items) ? sprintf('instance of %s', get_class($items)) : gettype($items)
+			));
+		}
+
 		$this->reset();
 
 		foreach (self::valuesFromProviderIfAny($items) as $key => $item) {
@@ -93,8 +113,20 @@ final class Options extends Node implements NamedNode
 	{
 		$this->clear();
 
-		foreach (self::valuesFromProviderIfAny($candidates) as $key => $candidate) {
-			$this->addCandidate($candidate, $key);
+		if (is_array($candidates) || $candidates instanceof ManyValuesProvider) {
+			foreach (self::valuesFromProviderIfAny($candidates) as $key => $candidate) {
+				$this->addCandidate($candidate, $key);
+			}
+
+		} elseif ($candidates instanceof Node && $candidates->isBag()) {
+			$this->addCandidate($candidates);
+
+		} else {
+			throw new InvalidArgumentException(sprintf(
+				'Candidates must be a bag, an instance of %s or an array, %s given.',
+				ManyValuesProvider::class,
+				is_object($candidates) ? sprintf('instance of %s', get_class($candidates)) : gettype($candidates)
+			));
 		}
 
 		return $this;
@@ -108,6 +140,14 @@ final class Options extends Node implements NamedNode
 	 */
 	public function add($item, $key = null): Options
 	{
+		if (is_array($item)) {
+			foreach ($item as $k => $i) {
+				$this->add($i, $k);
+			}
+
+			return $this;
+		}
+
 		return $this->addItem($this->items, $item, $key);
 	}
 
@@ -133,12 +173,42 @@ final class Options extends Node implements NamedNode
 
 
 	/**
+	 * @return array
+	 */
+	public function getAsArray(): array
+	{
+		if ($this->isBlank()) {
+			return [];
+		}
+
+		if (! $this->containsPrimitives()) {
+			throw new SchemerException('Cannot get non-primitive options as array.');
+		}
+
+		return collect($this->getItems())
+			->mapWithKeys(static function(ArrayItem $item) {
+				return [ $item->getKey() => $item->getValue() ];
+			})
+			->all();
+	}
+
+
+	/**
+	 * @return bool
+	 */
+	public function hasCandidates(): bool
+	{
+		return ! empty($this->candidates);
+	}
+
+
+	/**
 	 * @param bool $sortByPriority
 	 * @return Collection
 	 */
 	public function getCandidates($sortByPriority = true): Collection
 	{
-		if (empty($this->candidates)) {
+		if (! $this->hasCandidates()) {
 			return collect();
 		}
 
@@ -155,7 +225,7 @@ final class Options extends Node implements NamedNode
 			->map(static function(Node $item) { return $item->getChildren(); })
 			->flatten()
 			->filter(static function(Property $property) {
-				return !$property->isBag();
+				return ! $property->isBag();
 			})
 			->mapWithKeys(static function(Property $property) {
 				return [ $property->getName() => $property->getValueProvider() ];
@@ -192,7 +262,7 @@ final class Options extends Node implements NamedNode
 	 */
 	public function getUniqueKeyProperty(): ?Property
 	{
-		return !$this->containsPrimitives()
+		return ! $this->containsPrimitives()
 			&& ($candidate = $this->getCandidates()->first()) && $candidate instanceof ValueProvider
 			&& ($property = $candidate->getProperty()) && $property instanceof Property
 			&& $property->isUniqueKey()
@@ -299,16 +369,28 @@ final class Options extends Node implements NamedNode
 	{
 		$data = $this->prepareData($data);
 
-		if ($this->containsPrimitives()) {
+		if (empty($data)) {
+			return $this;
+		}
 
-			if ($this->getCandidates()->isNotEmpty()) {
-				foreach ($data as $item) {
-					$this->pick($item->key);
+		if (self::primitivesInData($data)) {
+
+			foreach (self::convertDataToArrayItems($data) as $item) {
+
+				if ($this->hasCandidates()) {
+					$this->pick($item->getKey());
+
+				} else {
+					$this->add($item);
 				}
 			}
 
 			return $this;
 		}
+
+		// ToDo: Refactoring of rich candidates initialization
+		// - conditional siblings in candidate bag
+		// - nested Options
 
 		$candidates = $this->getCandidates();
 
@@ -324,7 +406,7 @@ final class Options extends Node implements NamedNode
 
 			foreach ($candidates as $name => $valueProvider) {
 
-				if (!$properties->has($name)) {
+				if (! $properties->has($name)) {
 					continue;
 				}
 
@@ -544,6 +626,10 @@ final class Options extends Node implements NamedNode
 			return 'node';
 		}
 
+		if ($item instanceof stdClass && array_keys((array) $item) === [ 'key', 'value' ]) {
+			$item = new ArrayItem($item->value, $item->key);
+		}
+
 		if ($item instanceof ArrayItem) {
 			return gettype($item->getValue());
 		}
@@ -554,9 +640,49 @@ final class Options extends Node implements NamedNode
 
 
 	/**
+	 * @param array $data
+	 * @return bool
 	 * @internal
+	 */
+	private static function primitivesInData(array $data): bool
+	{
+		return ! empty($data) && self::stdClassToArrayItem(current($data)) instanceof ArrayItem;
+	}
+
+
+	/**
+	 * @param array $data
+	 * @return ArrayItem[]
+	 * @internal
+	 */
+	private static function convertDataToArrayItems(array $data): array
+	{
+		return collect($data)
+			->map(static function($item) {
+				return self::stdClassToArrayItem($item);
+			})
+			->filter()
+			->all();
+	}
+
+
+	/**
+	 * @param $value
+	 * @return ArrayItem|null
+	 * @internal
+	 */
+	private static function stdClassToArrayItem($value): ?ArrayItem
+	{
+		return $value instanceof stdClass && array_keys((array) $value) === [ 'key', 'value' ]
+			? new ArrayItem($value->value, $value->key)
+			: null;
+	}
+
+
+	/**
 	 * @param  mixed $values
 	 * @return array
+	 * @internal
 	 */
 	private static function valuesFromProviderIfAny($values): array
 	{

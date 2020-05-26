@@ -6,22 +6,14 @@
 
 declare(strict_types=1);
 
-namespace Freshio\Tests\Catalog\Catalog;
+namespace Schemer\Tests\Schemer;
 
-use Freshio\Tests\Catalog\Bootstrap;
-use Schemer\ManyValuesProvider;
 use Schemer\Options;
-use Schemer\Property;
-use Schemer\StaticArrayProvider;
-use Schemer\UserValueProvider;
-use Schemer\Validators\Inputs\ArrayOf;
 use Schemer\Validators\Inputs\BooleanInput;
 use Schemer\Validators\Inputs\TextualInput;
 use Schemer\Node;
 use Schemer\Scheme;
-use Schemer\Validators\UserInputValidator;
 use Tester\Assert;
-use Tester\Dumper;
 use Tester\TestCase;
 
 require __DIR__ . '/../../vendor/autoload.php';
@@ -107,7 +99,7 @@ final class SchemeTest extends TestCase
 				])
 					->on('set', Scheme::group(
 
-						Scheme::options('set', [])
+						Scheme::options('set')
 					)),
 
 				Scheme::prop('required', BooleanInput::class)

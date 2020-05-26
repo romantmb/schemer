@@ -78,7 +78,7 @@ class Scheme
 	public static function options(string $name, ...$content): Options
 	{
 		return (new Options($name))
-			->setItems(count($content) === 1 && (is_array($content[0]) || $content[0] instanceof ManyValuesProvider) ? $content[0] : $content);
+			->setItems(count($content) > 1 ? $content : $content[0] ?? []);
 	}
 
 
@@ -92,7 +92,7 @@ class Scheme
 	public static function candidates(string $name, ...$content): Options
 	{
 		return (new Options($name))
-			->setCandidates(count($content) === 1 && (is_array($content[0]) || $content[0] instanceof ManyValuesProvider) ? $content[0] : $content);
+			->setCandidates(count($content) > 1 ? $content : $content[0] ?? []);
 	}
 
 

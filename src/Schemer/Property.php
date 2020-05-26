@@ -67,15 +67,6 @@ final class Property extends Node implements NamedNodeWithValue
 
 
 	/**
-	 * @return bool
-	 */
-	public function isBag(): bool
-	{
-		return !empty($this->children);
-	}
-
-
-	/**
 	 * @return static
 	 */
 	public function uniqueKey(): Property

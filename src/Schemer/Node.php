@@ -48,7 +48,7 @@ class Node implements Arrayable, Jsonable
 
 	/**
 	 * @param Node $child
-	 * @return Node
+	 * @return Node|mixed
 	 * @throws ExistingPropertyNameException
 	 * @throws InvalidNodeException
 	 */
@@ -59,7 +59,7 @@ class Node implements Arrayable, Jsonable
 			throw new InvalidNodeException(sprintf('Scheme node must implement NamedNode (e.g. Property or Options), %s given', $mismatch));
 		}
 
-		if (key_exists($child->getName(), $this->children)) {
+		if (array_key_exists($child->getName(), $this->children)) {
 			throw new ExistingPropertyNameException(sprintf("Property '%s' already exists in this node.", $child->getName()));
 		}
 
@@ -95,6 +95,15 @@ class Node implements Arrayable, Jsonable
 	public function getParent(): ?Node
 	{
 		return $this->parent;
+	}
+
+
+	/**
+	 * @return bool
+	 */
+	public function isBag(): bool
+	{
+		return ! empty($this->children);
 	}
 
 
