@@ -21,7 +21,7 @@ final class NumericInput extends NullableNumericInput
 	 */
 	function isValid(): bool
 	{
-		return !$this->isEmpty() && parent::isValid();
+		return ! $this->isEmpty() && parent::isValid();
 	}
 
 

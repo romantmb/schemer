@@ -28,7 +28,7 @@ class UserValueProvider implements ValueProvider
 	 */
 	public function __construct(string $validatorClass)
 	{
-		if (!is_subclass_of($validatorClass, Input::class)) {
+		if (! is_subclass_of($validatorClass, Input::class)) {
 			throw new InvalidArgumentException(sprintf('Validator must be an instance of %s, %s given.', Input::class, $validatorClass));
 		}
 

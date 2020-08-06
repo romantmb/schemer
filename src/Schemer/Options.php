@@ -41,7 +41,7 @@ final class Options extends Node implements NamedNode
 	{
 		parent::__construct($parent);
 
-		if (!$name) {
+		if (! $name) {
 			throw new InvalidNodeException('Options name must be defined.');
 		}
 
@@ -63,7 +63,7 @@ final class Options extends Node implements NamedNode
 	 */
 	public function containsPrimitives(): bool
 	{
-		return !in_array($this->itemType, [ null, 'node' ], true);
+		return ! in_array($this->itemType, [ null, 'node' ], true);
 	}
 
 
@@ -153,7 +153,7 @@ final class Options extends Node implements NamedNode
 			->map(static function(Node $item) { return $item->getChildren(); })
 			->flatten()
 			->filter(static function(Property $property) {
-				return !$property->isBag();
+				return ! $property->isBag();
 			})
 			->mapWithKeys(static function(Property $property) {
 				return [ $property->getName() => $property->getValueProvider() ];
@@ -190,7 +190,7 @@ final class Options extends Node implements NamedNode
 	 */
 	public function getUniqueKeyProperty(): ?Property
 	{
-		return !$this->containsPrimitives()
+		return ! $this->containsPrimitives()
 			&& ($candidate = $this->getCandidates()->first()) && $candidate instanceof ValueProvider
 			&& ($property = $candidate->getProperty()) && $property instanceof Property
 			&& $property->isUniqueKey()
@@ -266,7 +266,7 @@ final class Options extends Node implements NamedNode
 			return $item->set($definition, $value);
 		});
 
-		if (!$found) {
+		if (! $found) {
 			throw new ItemNotFoundException(sprintf("Option '%s' not found in '%s'.", $def, $this->getPath()));
 		}
 
@@ -318,7 +318,7 @@ final class Options extends Node implements NamedNode
 
 			foreach ($candidates as $name => $valueProvider) {
 
-				if (!$properties->has($name)) {
+				if (! $properties->has($name)) {
 					continue;
 				}
 
@@ -332,7 +332,7 @@ final class Options extends Node implements NamedNode
 					continue;
 				}
 
-				if (!$option) {
+				if (! $option) {
 					throw new UndeterminedPropertyException('No specific option candidate picked up. (ToDo: This issue has to be made up. )');
 				}
 
@@ -483,12 +483,15 @@ final class Options extends Node implements NamedNode
 			throw new InvalidNodeException('Multiple candidates not supported.');
 		}
 
+		dump($this->candidates);
+
 		/** @var Node $bag */
 		$bag = $this->candidates[0];
 
 		$uniqueKeyCount = 0;
 
 		foreach ($bag->getChildren() as $property) {
+			dump($property);
 			/** @var Property $property */
 			$uniqueKeyCount += (int) $property->isUniqueKey();
 		}

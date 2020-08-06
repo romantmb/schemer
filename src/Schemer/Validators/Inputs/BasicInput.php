@@ -65,7 +65,7 @@ abstract class BasicInput implements Input
 			$value = @$data[$keyVariant];
 		}
 
-		if ($value !== null && !is_scalar($value) && !is_array($value)) {
+		if ($value !== null && ! is_scalar($value) && ! is_array($value)) {
 			throw new InvalidUserInputException(sprintf('Supported types of value are nulls, scalars and arrays of scalars, %s given.', gettype($value)));
 		}
 
@@ -113,7 +113,7 @@ abstract class BasicInput implements Input
 	 */
 	function isValid(): bool
 	{
-		return !$this->isUndefined();
+		return ! $this->isUndefined();
 	}
 
 
@@ -149,7 +149,7 @@ abstract class BasicInput implements Input
 	 */
 	function isEmpty(): bool
 	{
-		return !$this->value || $this->isUndefined();
+		return ! $this->value || $this->isUndefined();
 	}
 
 

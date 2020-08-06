@@ -102,7 +102,7 @@ class CustomInput extends BasicInput
 	 */
 	function getIssue(): ?string
 	{
-		if (!$this->isValid()) {
+		if (! $this->isValid()) {
 			return sprintf("value ('%s') is not valid", $this->value);
 		}
 		return null;

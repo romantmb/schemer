@@ -52,7 +52,7 @@ class Node implements Arrayable, Jsonable
 	 */
 	public function add(Node $child)
 	{
-		if (!$child instanceof NamedNode) {
+		if (! $child instanceof NamedNode) {
 			$mismatch = is_object($child) ? ('instance of ' . get_class($child)) : strtolower(gettype($child));
 			throw new InvalidNodeException(sprintf('Scheme node must implement NamedNode (e.g. Property or Options), %s given', $mismatch));
 		}
@@ -188,7 +188,7 @@ class Node implements Arrayable, Jsonable
 		}
 
 		if ($pick !== null) {
-			if (!$current instanceof Options) {
+			if (! $current instanceof Options) {
 				throw new InvalidNodeException(sprintf('Syntax [name=value] is for scheme options only, not for %s.', get_class($current)));
 			}
 
@@ -445,7 +445,7 @@ class Node implements Arrayable, Jsonable
 			}
 		}
 
-		if (!is_array($data) && (!is_object($data) || get_class($data) !== stdClass::class)) {
+		if (! is_array($data) && (! is_object($data) || get_class($data) !== stdClass::class)) {
 			$invalid = is_object($data) ? ('instance of ' . get_class($data)) : gettype($data);
 			throw new InvalidSchemeDataException(sprintf('Data for scheme initialization must be JSON, array or stdClass, %s given.', $invalid), 0);
 		}
@@ -453,7 +453,7 @@ class Node implements Arrayable, Jsonable
 		foreach ($data as $name => $content) {
 			$item = $node->get($name);
 
-			if ($item instanceof Property && !$item->isBag()) {
+			if ($item instanceof Property && ! $item->isBag()) {
 				$item->setValue($content);
 
 			} else {

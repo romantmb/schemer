@@ -60,7 +60,7 @@ class FormInputSpecification
 
 		$this->service = $service;
 
-		if (is_array($property->getValueProvider()) || !empty($property->getOptionalValues())) {
+		if (is_array($property->getValueProvider()) || ! empty($property->getOptionalValues())) {
 			$this->type = 'select';
 
 		} elseif (($userValueProvider = $property->getValueProvider())  && $userValueProvider instanceof UserValueProvider) {

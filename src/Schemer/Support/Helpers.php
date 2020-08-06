@@ -37,7 +37,7 @@ class Helpers
 	 */
 	public static function sanitizeValue($value)
 	{
-		if (!is_string($value)) {
+		if (! is_string($value)) {
 			return $value;
 		}
 

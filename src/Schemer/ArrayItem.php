@@ -25,15 +25,15 @@ class ArrayItem
 	 */
 	public function __construct($value, $key = null)
 	{
-		if ($value !== null && !is_scalar($value)) {
+		if ($value !== null && ! is_scalar($value)) {
 			throw new InvalidValueException(sprintf('Array value must be of scalar type, %s given.', gettype($value)));
 		}
 
 		$this->value = $value ?: null;
 
-		$this->key = !is_string($key) || !$key ? (string) $this->value : $key;
+		$this->key = ! is_string($key) || ! $key ? (string) $this->value : $key;
 
-		if (!$this->value && !$this->key) {
+		if (! $this->value && ! $this->key) {
 			throw new InvalidValueException('Non-associative array item with empty value is not allowed.');
 		}
 	}

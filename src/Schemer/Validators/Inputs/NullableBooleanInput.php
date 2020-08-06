@@ -58,7 +58,7 @@ class NullableBooleanInput extends BasicInput
 	 */
 	function getIssue(): ?string
 	{
-		if (!$this->isValid()) {
+		if (! $this->isValid()) {
 			return sprintf('must be boolean, %s given', gettype($this->getValue()));
 		}
 		return null;

@@ -47,7 +47,7 @@ class NullableDateTimeInput extends BasicInput
 	 */
 	function isEmpty(): bool
 	{
-		return $this->isNull() || !$this->value;
+		return $this->isNull() || ! $this->value;
 	}
 
 
@@ -66,7 +66,7 @@ class NullableDateTimeInput extends BasicInput
 	 */
 	function getIssue(): ?string
 	{
-		if (!$this->isValid()) {
+		if (! $this->isValid()) {
 			if (is_int($this->value)) {
 				$mismatch = $this->value;
 			} elseif (is_string($this->value)) {

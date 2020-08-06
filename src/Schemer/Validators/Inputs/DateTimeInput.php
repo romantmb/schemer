@@ -21,7 +21,7 @@ final class DateTimeInput extends BasicInput
 	 */
 	function isValid(): bool
 	{
-		return !$this->isEmpty() && parent::isValid();
+		return ! $this->isEmpty() && parent::isValid();
 	}
 
 

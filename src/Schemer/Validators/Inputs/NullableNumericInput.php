@@ -72,7 +72,7 @@ class NullableNumericInput extends BasicInput
 	 */
 	function getIssue(): ?string
 	{
-		if (!$this->isValid()) {
+		if (! $this->isValid()) {
 			return sprintf('must be numeric, %s given', gettype($this->value));
 		}
 		return null;

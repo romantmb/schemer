@@ -21,7 +21,7 @@ class InputNameToSchemePathTransformer extends StaticClass
 	 */
 	public static function transform(string $name = null): ?string
 	{
-		if (!$name || strpos($name, SchemePathToInputNameTransformer::INPUT_PREFIX) !== 0) {
+		if (! $name || strpos($name, SchemePathToInputNameTransformer::INPUT_PREFIX) !== 0) {
 			return null;
 		}
 

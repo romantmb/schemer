@@ -47,7 +47,7 @@ final class Property extends Node implements NamedNodeWithValue
 	{
 		parent::__construct($parent);
 
-		if (!$name) {
+		if (! $name) {
 			throw new InvalidNodeException('Property name must be defined.');
 		}
 
@@ -69,7 +69,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 */
 	public function isBag(): bool
 	{
-		return !empty($this->children);
+		return ! empty($this->children);
 	}
 
 
@@ -220,7 +220,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 */
 	public function hasAnyConditionalSiblings(): bool
 	{
-		return !empty($this->conditionalSiblings);
+		return ! empty($this->conditionalSiblings);
 	}
 
 
@@ -230,7 +230,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 */
 	public function getSiblings(): array
 	{
-		if (!$this->hasAnyConditionalSiblings()) {
+		if (! $this->hasAnyConditionalSiblings()) {
 			return [];
 		}
 
@@ -302,7 +302,7 @@ final class Property extends Node implements NamedNodeWithValue
 			 */
 			$path = substr_replace(
 				$path,
-				!$this->isUniqueKey() ? sprintf('[%s=*]', $uniqueKeyProperty->getName()) : '',
+				! $this->isUniqueKey() ? sprintf('[%s=*]', $uniqueKeyProperty->getName()) : '',
 				strpos($path, '.' . $this->getName()),
 				$this->isUniqueKey() ? (strlen($this->getName()) + 1) : 0
 			);
@@ -326,7 +326,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 */
 	public function toArray()
 	{
-		if (!$this->isBag()) {
+		if (! $this->isBag()) {
 			return $this->getValue();
 		}
 
@@ -340,7 +340,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 */
 	public function toJson($options = 0)
 	{
-		if (!$this->isBag()) {
+		if (! $this->isBag()) {
 			return $this->getValue();
 		}
 
@@ -382,7 +382,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 */
 	private static function getConditionalKey($value): string
 	{
-		if (!is_scalar($value)) {
+		if (! is_scalar($value)) {
 			throw new InvalidValueException(sprintf('Conditional value must be scalar, %s given.'. gettype($value)));
 		}
 

@@ -39,7 +39,7 @@ final class Group extends Node implements Iterator
 
 		foreach ($siblings as $sibling) {
 
-			if (!$sibling instanceof NamedNode) {
+			if (! $sibling instanceof NamedNode) {
 				$mismatch = is_object($sibling) ? ('instance of ' . get_class($sibling)) : gettype($sibling);
 				throw new InvalidNodeException(sprintf('Group member must implement NamedNode (e.g. Property or Options), %s given', $mismatch));
 			}

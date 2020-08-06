@@ -44,7 +44,7 @@ final class PrizeIdentifierValidator extends CustomInput
 
 	public function getIssue(): ?string
 	{
-		if (!$this->isValid()) {
+		if (! $this->isValid()) {
 			$mismatch = sprintf(
 				is_string($this->value) ? "'%s'" : '%s',
 				is_array($this->value) ? implode(', ', $this->value) : $this->value
@@ -63,9 +63,9 @@ final class PrizeIdentifierValidator extends CustomInput
 	protected static function isArrayOfIds($array): bool
 	{
 		return is_array($array)
-			&& !empty($array)
+			&& ! empty($array)
 			&& collect($array)->filter(function($value) {
-				return !is_int($value) || $value < 1;
+				return ! is_int($value) || $value < 1;
 			})->count() === 0;
 	}
 }
@@ -81,7 +81,7 @@ final class DrawStartDateValidator extends CustomInput
 	protected function validator(): bool
 	{
 		if (strpos($this->value, '<') !== false) {
-			if (!preg_match(sprintf("~<(%s)>~", implode('|', self::$wildcards)), $this->value)) {
+			if (! preg_match(sprintf("~<(%s)>~", implode('|', self::$wildcards)), $this->value)) {
 				throw new InvalidValueException(sprintf("Allowed draw date wildcards are '<%s>'.", implode(">' and '<", self::$wildcards)));
 			}
 		}
@@ -218,6 +218,13 @@ final class SimpleTestCase
 					Scheme::prop('trigger', [
 						'human',
 						'robot',
+					]),
+
+					Scheme::candidates('contentRestrictions', [
+						'alcohol',
+						'tobacco',
+						'sexual',
+						'explicit',
 					]),
 
 					Scheme::prop('mechanics', [

@@ -41,7 +41,7 @@ class StaticArrayProvider implements ManyValuesProvider
 	 */
 	public function setValue($value)
 	{
-		if ($value !== null && !in_array($value = Helpers::sanitizeValue($value), $this->getValues(), true)) {
+		if ($value !== null && ! in_array($value = Helpers::sanitizeValue($value), $this->getValues(), true)) {
 			throw new InvalidValueException(sprintf(
 				"Value %s%s does not match optional values [ %s ].",
 				Helpers::export($value),

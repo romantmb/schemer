@@ -61,7 +61,7 @@ class NullableArrayOf implements Input
 	function isValid(): bool
 	{
 		foreach ($this->inputs as $input) {
-			if (!$input->isValid()) {
+			if (! $input->isValid()) {
 				return false;
 			}
 		}
@@ -101,7 +101,7 @@ class NullableArrayOf implements Input
 	 */
 	function isEmpty(): bool
 	{
-		return !$this->values;
+		return ! $this->values;
 	}
 
 

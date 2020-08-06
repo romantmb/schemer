@@ -128,12 +128,12 @@ final class UserInputValidator
 	 */
 	public function reject($callback)
 	{
-		if (!Callback::check($callback)) {
+		if (! Callback::check($callback)) {
 			throw new InvalidArgumentException('Callback function is not callable.');
 		}
 		$inputs = [];
 		foreach ($this->inputs as $input) {
-			if (!$callback($input)) {
+			if (! $callback($input)) {
 				$inputs[] = $input;
 			}
 		}
@@ -179,7 +179,7 @@ final class UserInputValidator
 			// default handler
 			$handler = new InvalidUserInputException('%item% %issue%.');
 		}
-		if (!$handler instanceof Exception && !is_string($handler)) {
+		if (! $handler instanceof Exception && ! is_string($handler)) {
 			throw new InvalidArgumentException('Handler must be an error message (string) or an exception to be thrown.');
 		}
 		$this->onInvalid = $handler;

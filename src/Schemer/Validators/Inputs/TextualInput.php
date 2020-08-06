@@ -21,7 +21,7 @@ final class TextualInput extends NullableTextualInput
 	 */
 	function isValid(): bool
 	{
-		return !$this->isEmpty() && parent::isValid();
+		return ! $this->isEmpty() && parent::isValid();
 	}
 
 

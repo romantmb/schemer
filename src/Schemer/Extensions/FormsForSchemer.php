@@ -61,11 +61,11 @@ final class FormsForSchemer
 	 */
 	public function setSlugToHumanReadableTransformer(string $class): FormsForSchemer
 	{
-		if (!class_exists($class)) {
+		if (! class_exists($class)) {
 			throw new InvalidArgumentException(sprintf("Class '%s' not found.", $class));
 		}
 
-		if (!is_a($class, TransformerAbstract::class, true)) {
+		if (! is_a($class, TransformerAbstract::class, true)) {
 			throw new InvalidArgumentException(sprintf("Class '%s' must extends '%s'.", $class, TransformerAbstract::class));
 		}
 
@@ -243,7 +243,7 @@ final class FormsForSchemer
 				$this->validation($scheme, $spec, $value);
 
 				if ($spec->getProperty()->isUniqueKey()
-					&& (!is_string($value) || strpos($value, '=') === false)) {
+					&& (! is_string($value) || strpos($value, '=') === false)) {
 					$value = sprintf('%s=%s', $spec->getName(), is_array($value) ? implode(',', $value) : $value);
 				}
 
