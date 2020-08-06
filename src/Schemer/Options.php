@@ -152,11 +152,14 @@ final class Options extends Node implements NamedNode
 		$candidates = collect($this->candidates)
 			->map(static function(Node $item) { return $item->getChildren(); })
 			->flatten()
-			->filter(static function(Property $property) {
-				return ! $property->isBag();
+			->filter(static function(NamedNode $node) {
+				return $node instanceof NamedNodeWithValue
+					&& (! $node instanceof Property || ! $node->isBag());
 			})
-			->mapWithKeys(static function(Property $property) {
-				return [ $property->getName() => $property->getValueProvider() ];
+			->mapWithKeys(static function(NamedNodeWithValue $node) {
+				return [
+					$node->getName() => $node instanceof Property ? $node->getValueProvider() : $node->getValue()
+				];
 			});
 
 		if ($sortByPriority === false) {
@@ -483,17 +486,15 @@ final class Options extends Node implements NamedNode
 			throw new InvalidNodeException('Multiple candidates not supported.');
 		}
 
-		dump($this->candidates);
-
 		/** @var Node $bag */
 		$bag = $this->candidates[0];
 
 		$uniqueKeyCount = 0;
 
 		foreach ($bag->getChildren() as $property) {
-			dump($property);
-			/** @var Property $property */
-			$uniqueKeyCount += (int) $property->isUniqueKey();
+			if ($property instanceof Property) {
+				$uniqueKeyCount += (int) $property->isUniqueKey();
+			}
 		}
 
 		if ($uniqueKeyCount === 0) {

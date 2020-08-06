@@ -220,12 +220,16 @@ final class SimpleTestCase
 						'robot',
 					]),
 
-					Scheme::candidates('contentRestrictions', [
-						'alcohol',
-						'tobacco',
-						'sexual',
-						'explicit',
-					]),
+					Scheme::prop('contentRestrictions',
+						Scheme::prop('alcohol', BooleanInput::class)
+							->default(false),
+						Scheme::prop('tobacco', BooleanInput::class)
+							->default(false),
+						Scheme::prop('sexual', BooleanInput::class)
+							->default(false),
+						Scheme::prop('explicit', BooleanInput::class)
+							->default(false)
+					),
 
 					Scheme::prop('mechanics', [
 						'random',

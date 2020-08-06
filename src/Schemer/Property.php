@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 /**
  * Schemer
@@ -180,7 +180,7 @@ final class Property extends Node implements NamedNodeWithValue
 			$value = $this->valueProvider->getValue();
 		}
 
-		return $value !== null ? $value : $this->defaultValue;
+		return $value ?? $this->defaultValue;
 	}
 
 
@@ -201,7 +201,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 * @return Property
 	 * @throws InvalidNodeException
 	 */
-	public function on($value, Node $node)
+	public function on($value, Node $node): Property
 	{
 		$key = self::getConditionalKey($value);
 
@@ -294,8 +294,8 @@ final class Property extends Node implements NamedNodeWithValue
 		$path = parent::getPath();
 
 		if (($options = $this->isInOptions())
-			&& $this->getParent()->getKey() === null
-			&& $uniqueKeyProperty = $options->getUniqueKeyProperty()) {
+			&& ($uniqueKeyProperty = $options->getUniqueKeyProperty())
+			&& ($parent = $this->getParent()) && $parent->getKey() === null) {
 
 			/**
 			 * 'options.someProperty' -> 'options[uniqueProp=*].someProperty'
@@ -315,7 +315,7 @@ final class Property extends Node implements NamedNodeWithValue
 	/**
 	 * @return Node[]
 	 */
-	public function getUndeterminedSiblings()
+	public function getUndeterminedSiblings(): array
 	{
 		return $this->conditionalSiblings;
 	}
@@ -365,6 +365,7 @@ final class Property extends Node implements NamedNodeWithValue
 		foreach ($this->conditionalSiblings as & $sibling) {
 			$sibling = clone $sibling;
 		}
+		unset($sibling);
 
 		if ($this->valueProvider !== null) {
 			$this->valueProvider = clone $this->valueProvider;
