@@ -452,10 +452,6 @@ final class Options extends Node implements NamedNode
 			$item = new ArrayItem($item, $key);
 		}
 
-		if (! is_object($item) || ! in_array(get_class($item), [ Node::class, ArrayItem::class ], true)) {
-			throw new InvalidValueException('Options must be defined as a primitive array or a bag of properties (inside Scheme::bag()).');
-		}
-
 		if ($this->itemType === null) {
 			$this->itemType = self::getItemType($item);
 
