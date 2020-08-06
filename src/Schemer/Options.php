@@ -166,15 +166,15 @@ final class Options extends Node implements NamedNode
 		$sortedCandidates = collect();
 
 		$candidates = $candidates
-			->filter(function(ValueProvider $provider = null, $key = null) use (& $sortedCandidates) {
-				if ($provider !== null && $provider->getProperty()->isUniqueKey()) {
+			->filter(static function(ValueProvider $provider = null, $key = null) use (& $sortedCandidates) {
+				if ($provider !== null && ($prop = $provider->getProperty()) && $prop->isUniqueKey()) {
 					$sortedCandidates->put($key ,$provider);
 					return false;
 				}
 				return true;
 			})
-			->filter(function(ValueProvider $provider = null, $key = null) use (& $sortedCandidates) {
-				if ($provider !== null && $provider->getProperty()->hasAnyConditionalSiblings()) {
+			->filter(static function(ValueProvider $provider = null, $key = null) use (& $sortedCandidates) {
+				if ($provider !== null && ($prop = $provider->getProperty()) && $prop->hasAnyConditionalSiblings()) {
 					$sortedCandidates->put($key ,$provider);
 					return false;
 				}
@@ -201,7 +201,7 @@ final class Options extends Node implements NamedNode
 	/**
 	 * @param bool $hard
 	 */
-	public function reset(bool $hard = false)
+	public function reset(bool $hard = false): void
 	{
 		$this->items = [];
 
@@ -212,7 +212,7 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	public function beforeAdded(Node $parent)
+	public function beforeAdded(Node $parent): void
 	{
 		$this->validateDeclaration();
 	}
@@ -241,14 +241,15 @@ final class Options extends Node implements NamedNode
 
 		if ($existing = $this->findItem($def)) {
 			return $existing;
+		}
 
-		} elseif ($checkIfExistsOnly === true) {
+		if ($checkIfExistsOnly === true) {
 			return null;
 		}
 
 		$uniqueKey = null;
 
-		$found = $this->findCandidate($definition, function($item) use ($definition, $value, $def, & $uniqueKey) {
+		$found = $this->findCandidate($definition, static function($item) use ($definition, $value, & $uniqueKey) {
 
 			if (! $item instanceof Node) {
 				return $item;
@@ -258,7 +259,7 @@ final class Options extends Node implements NamedNode
 				throw new InvalidNodeException(sprintf("Node '%s' is not a Property.", $prop->getPath()));
 			}
 
-			if ($prop->isUniqueKey()) {
+			if ($prop instanceof Property && $prop->isUniqueKey()) {
 				$uniqueKey = sprintf('%s=%s', $prop->getName(), is_array($value) ? implode(',', $value) : $value);
 			}
 
@@ -323,7 +324,8 @@ final class Options extends Node implements NamedNode
 
 				$value = $properties->pull($name);
 
-				if ($valueProvider->getProperty()->isUniqueKey()
+				if (($prop = $valueProvider->getProperty())
+					&& $prop->isUniqueKey()
 					&& ($o = $this->pick($name, $value)) instanceof Node) {
 
 					$option = $o;
@@ -337,7 +339,7 @@ final class Options extends Node implements NamedNode
 				$option->set($name, $value);
 			}
 
-			if (!empty($candidates) && !$option) {
+			if (! $option && $candidates->isNotEmpty()) {
 				throw new UndeterminedPropertyException('No specific option candidate picked up. (ToDo: This issue has to be made up. )');
 			}
 
@@ -349,7 +351,7 @@ final class Options extends Node implements NamedNode
 	/**
 	 * @param Node $node
 	 */
-	public function remove(Node $node)
+	public function remove(Node $node): void
 	{
 		foreach ($this->items as $key => $item) {
 			if ($item === $node) {
@@ -361,28 +363,9 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	public function clear()
+	public function clear(): void
 	{
 		$this->reset(true);
-	}
-
-
-	/**
-	 * @return array
-	 */
-	public function toArray()
-	{
-		return $this->collection()->toArray();
-	}
-
-
-	/**
-	 * @param  int $options
-	 * @return string
-	 */
-	public function toJson($options = 0)
-	{
-		return $this->collection()->toJson($options);
 	}
 
 
@@ -404,7 +387,7 @@ final class Options extends Node implements NamedNode
 		$collection = collect($this->getItems());
 
 		if ($this->containsPrimitives()) {
-			return $collection->map(function(ArrayItem $item) {
+			return $collection->map(static function(ArrayItem $item) {
 				return [ 'key' => $item->getKey(), 'value' => $item->getValue() ];
 			})
 				->values();
@@ -431,17 +414,17 @@ final class Options extends Node implements NamedNode
 
 
 	/**
-	 * @internal
-	 * @param string   $by
-	 * @param callable $onSuccess
+	 * @param string        $by
+	 * @param callable|null $onSuccess
 	 * @return Node|ArrayItem|null
+	 * @internal
 	 */
 	private function findCandidate($by, callable $onSuccess = null)
 	{
 		foreach ($this->candidates as $candidate) {
 
-			if ($candidate instanceof Node && $candidate->find($by)
-				|| $candidate instanceof ArrayItem && $candidate->getKey() == $by) {
+			if (($candidate instanceof Node && $candidate->find($by))
+				|| ($candidate instanceof ArrayItem && $candidate->getKey() === $by)) {
 
 				return $onSuccess === null ? clone $candidate : $onSuccess(clone $candidate);
 			}
@@ -469,7 +452,7 @@ final class Options extends Node implements NamedNode
 			$item = new ArrayItem($item, $key);
 		}
 
-		if (!in_array(get_class($item), [ Node::class, ArrayItem::class ], true)) {
+		if (! is_object($item) || ! in_array(get_class($item), [ Node::class, ArrayItem::class ], true)) {
 			throw new InvalidValueException('Options must be defined as a primitive array or a bag of properties (inside Scheme::bag()).');
 		}
 
@@ -494,7 +477,7 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	private function validateDeclaration()
+	private function validateDeclaration(): void
 	{
 		if ($this->containsPrimitives()) {
 			return;
@@ -531,13 +514,13 @@ final class Options extends Node implements NamedNode
 	 */
 	private function sanitizeArrayKey($key): ?string
 	{
-		$key = is_string($key) && strlen($key) > 0 ? $key : null;
+		$key = is_string($key) && $key !== '' ? $key : null;
 
-		if ($this->associative !== null && $this->associative !== !!$key) {
+		if ($this->associative !== null && $this->associative !== (bool) $key) {
 			throw new InvalidValueException('Cannot mix associative and non-associative keys.');
 		}
 
-		$this->associative = !!$key;
+		$this->associative = (bool) $key;
 
 		return $key;
 	}
@@ -547,7 +530,7 @@ final class Options extends Node implements NamedNode
 	 * @param mixed $item
 	 * @return string
 	 */
-	private static function getItemType($item)
+	private static function getItemType($item): string
 	{
 		if ($item instanceof Node) {
 			return 'node';
@@ -567,7 +550,7 @@ final class Options extends Node implements NamedNode
 	 * @param  mixed $values
 	 * @return array
 	 */
-	private static function valuesFromProviderIfAny($values)
+	private static function valuesFromProviderIfAny($values): array
 	{
 		if (is_array($values)) {
 			return $values;
