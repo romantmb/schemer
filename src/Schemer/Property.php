@@ -130,7 +130,7 @@ final class Property extends Node implements NamedNodeWithValue
 		} elseif ($value instanceof ValueProvider) {
 			$this->valueProvider = $value->setProperty($this);
 
-		} elseif (is_scalar($value) || is_array($value)) {
+		} elseif ($value === null || is_scalar($value) || is_array($value)) {
 			if ($this->valueProvider instanceof ValueProvider) {
 				$this->value = $this->valueProvider->setValue($value);
 
