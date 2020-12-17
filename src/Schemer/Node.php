@@ -57,7 +57,7 @@ class Node implements Arrayable, Jsonable
 			throw new InvalidNodeException(sprintf('Scheme node must implement NamedNode (e.g. Property or Options), %s given', $mismatch));
 		}
 
-		if (key_exists($child->getName(), $this->children)) {
+		if (array_key_exists($child->getName(), $this->children)) {
 			throw new ExistingPropertyNameException(sprintf("Property '%s' already exists in this node.", $child->getName()));
 		}
 
@@ -274,7 +274,7 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * Error-tolerant form of set()
+	 * Error-tolerant alternative of set()
 	 *
 	 * @param string $path
 	 * @param mixed  $value
@@ -317,6 +317,20 @@ class Node implements Arrayable, Jsonable
 	public function initialize($data)
 	{
 		$this->fillNodeWithData($data);
+
+		return $this;
+	}
+
+
+	/**
+	 * Error-tolerant alternative of initialize()
+	 *
+	 * @param string|array $data
+	 * @return Node
+	 */
+	public function tryInitialize($data)
+	{
+		$this->fillNodeWithData($data, null, true);
 
 		return $this;
 	}
@@ -431,12 +445,13 @@ class Node implements Arrayable, Jsonable
 	/**
 	 * @param array|string $data
 	 * @param Node|null    $node
+	 * @param bool         $ignoreNonExistingNodes
 	 */
-	protected function fillNodeWithData($data, Node $node = null)
+	protected function fillNodeWithData($data, Node $node = null, bool $ignoreNonExistingNodes = false)
 	{
 		$node = $node ?: $this;
 
-		if ($node->getParent() === null && is_string($data)) {
+		if (is_string($data) && $node->getParent() === null) {
 			try {
 				$data = Json::decode($data);
 
@@ -451,10 +466,22 @@ class Node implements Arrayable, Jsonable
 		}
 
 		foreach ($data as $name => $content) {
-			$item = $node->get($name);
+
+			try {
+				$item = $node->get($name);
+
+			} catch (ItemNotFoundException $e) {
+				if ($ignoreNonExistingNodes !== true) {
+					throw $e;
+				}
+				continue;
+			}
 
 			if ($item instanceof Property && ! $item->isBag()) {
 				$item->setValue($content);
+
+			} elseif ($ignoreNonExistingNodes === true) {
+				$item->tryInitialize($content);
 
 			} else {
 				$item->initialize($content);
