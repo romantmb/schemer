@@ -15,7 +15,7 @@ use Nette\Utils\Arrays;
 class StaticArrayProvider implements ManyValuesProvider
 {
 	/** @var array */
-	private $values = [];
+	private $values;
 
 	/** @var Property */
 	private $property;
@@ -58,6 +58,15 @@ class StaticArrayProvider implements ManyValuesProvider
 	 * @return bool
 	 */
 	public function preserveKeys(): bool
+	{
+		return false;
+	}
+
+
+	/**
+	 * @return bool
+	 */
+	public function multipleValues(): bool
 	{
 		return false;
 	}

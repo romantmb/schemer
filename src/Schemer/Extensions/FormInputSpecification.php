@@ -61,9 +61,16 @@ class FormInputSpecification
 		$this->service = $service;
 
 		if (is_array($property->getValueProvider()) || ! empty($property->getOptionalValues())) {
-			$this->type = 'select';
 
-		} elseif (($userValueProvider = $property->getValueProvider())  && $userValueProvider instanceof UserValueProvider) {
+			if (($userValueProvider = $property->getValueProvider()) && $userValueProvider instanceof ManyValuesProvider
+				&& $userValueProvider->multipleValues()) {
+				$this->type = 'multipleselect';
+
+			} else {
+				$this->type = 'select';
+			}
+
+		} elseif (($userValueProvider = $property->getValueProvider()) && $userValueProvider instanceof UserValueProvider) {
 
 			if (is_a($userValueProvider->getValidatorClass(), NullableBooleanInput::class, true)) {
 				$this->type = 'switch';
@@ -86,6 +93,15 @@ class FormInputSpecification
 	public function isSelect(): bool
 	{
 		return $this->type === 'select';
+	}
+
+
+	/**
+	 * @return bool
+	 */
+	public function isMultipleSelect(): bool
+	{
+		return $this->type === 'multipleselect';
 	}
 
 
@@ -255,7 +271,16 @@ class FormInputSpecification
 
 		$value = $this->property->getValue();
 
-		if ($this->isSelect() && $this->property->isInOptions()) {
+		if (($this->isSelect() || $this->isMultipleSelect()) && $this->property->isInOptions()) {
+
+			if (is_array($value)) {
+				return collect($value)
+					->map(function($v) {
+						return sprintf('%s=%s', $this->getName(), $v);
+					})
+					->all();
+			}
+
 			return $value ? sprintf('%s=%s', $this->getName(), $value) : null;
 		}
 
@@ -357,7 +382,7 @@ class FormInputSpecification
 	 */
 	private function initializeOptions(): array
 	{
-		if ($this->isSelect()) {
+		if ($this->isSelect() || $this->isMultipleSelect()) {
 
 			$valueProvider = $this->property->getValueProvider();
 			$preserveKeys = $valueProvider instanceof ManyValuesProvider ? $valueProvider->preserveKeys() : false;

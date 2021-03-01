@@ -26,6 +26,12 @@ interface ManyValuesProvider extends ValueProvider
 
 
 	/**
+	 * @return bool
+	 */
+	public function multipleValues(): bool;
+
+
+	/**
 	 * @param  Property $property
 	 * @return ManyValuesProvider
 	 */
