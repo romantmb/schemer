@@ -20,6 +20,7 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
+use Schemer\Support\Helpers;
 use stdClass;
 
 
@@ -50,7 +51,7 @@ class Node implements Arrayable, Jsonable
 	 * @throws ExistingPropertyNameException
 	 * @throws InvalidNodeException
 	 */
-	public function add(Node $child)
+	public function add(Node $child): Node
 	{
 		if (! $child instanceof NamedNode) {
 			$mismatch = is_object($child) ? ('instance of ' . get_class($child)) : strtolower(gettype($child));
@@ -70,7 +71,7 @@ class Node implements Arrayable, Jsonable
 	/**
 	 * @param Node $parent
 	 */
-	public function beforeAdded(Node $parent)
+	public function beforeAdded(Node $parent): void
 	{
 	}
 
@@ -163,7 +164,7 @@ class Node implements Arrayable, Jsonable
 
 		$value = null;
 		if (strpos($child, '=') !== false) {
-			@list($child, $value) = explode('=', $child);
+			[ $child, $value ] = explode('=', $child) + [ null, null ];
 		}
 
 		$current = $this;
@@ -180,11 +181,8 @@ class Node implements Arrayable, Jsonable
 			}
 		}
 
-		if ($setValues === true) {
-
-			if ($value !== null && $current instanceof NamedNodeWithValue) {
-				$current->setValue($value);
-			}
+		if ($setValues === true && $value !== null && $current instanceof NamedNodeWithValue) {
+			$current->setValue($value);
 		}
 
 		if ($pick !== null) {
@@ -196,12 +194,14 @@ class Node implements Arrayable, Jsonable
 				throw new ItemNotFoundException(sprintf("Option '%s' in '%s' is not picked up. Try to use pick() or set().", $pick, $current->getPath()));
 			}
 
-			$current = $current->pick($pick, null);
+			$current = $current->pick($pick);
 		}
 
-		return $current === null
-			? null
-			: ($path ? $current->find($path, $setValues) : $current);
+		if ($current === null) {
+			return null;
+		}
+
+		return $path ? $current->find($path, $setValues) : $current;
 	}
 
 
@@ -241,17 +241,21 @@ class Node implements Arrayable, Jsonable
 				self::stripPropertyNameInValue($item->getName(), Options::serializeValue($value))
 			);
 
-			if ($options->tryFind($lookFor) instanceof Node) {
+			if ($options->tryFind($lookFor) instanceof self) {
 				throw new SchemerException(sprintf("Cannot redefine value of existing unique key '%s'.", $item->getPath()));
 			}
 		}
 
 		if ($item instanceof Options) {
-			return ($return = $item->pick($value)) instanceof Node ? $return : $this;
+			return ($return = $item->pick($value)) instanceof self ? $return : $this;
 		}
 
 		if ($item instanceof NamedNodeWithValue) {
-			$item->setValue(self::stripPropertyNameInValue($item->getName(), $value));
+			$item->setValue(
+				Helpers::sanitizeValue(
+					self::stripPropertyNameInValue($item->getName(), $value)
+				)
+			);
 		}
 
 		return $this;
@@ -278,9 +282,9 @@ class Node implements Arrayable, Jsonable
 	 *
 	 * @param string $path
 	 * @param mixed  $value
-	 * @return static
+	 * @return Node
 	 */
-	public function trySet(string $path, $value): self
+	public function trySet(string $path, $value): Node
 	{
 		try {
 			$this->set($path, $value);
@@ -293,9 +297,9 @@ class Node implements Arrayable, Jsonable
 
 	/**
 	 * @param string $path
-	 * @return static
+	 * @return Node
 	 */
-	public function unset(string $path)
+	public function unset(string $path): Node
 	{
 		$item = $this->get($path);
 
@@ -314,7 +318,7 @@ class Node implements Arrayable, Jsonable
 	 * @param string|array $data
 	 * @return Node
 	 */
-	public function initialize($data)
+	public function initialize($data): Node
 	{
 		$this->fillNodeWithData($data);
 
@@ -328,7 +332,7 @@ class Node implements Arrayable, Jsonable
 	 * @param string|array $data
 	 * @return Node
 	 */
-	public function tryInitialize($data)
+	public function tryInitialize($data): Node
 	{
 		$this->fillNodeWithData($data, null, true);
 
@@ -351,7 +355,7 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * @param string $key
+	 * @param string|null $key
 	 * @return Node
 	 */
 	public function setKey(string $key = null): Node
@@ -405,7 +409,7 @@ class Node implements Arrayable, Jsonable
 	 * @return array
 	 * @throws UndeterminedPropertyException
 	 */
-	public function toArray()
+	public function toArray(): array
 	{
 		return $this->collection()->toArray();
 	}
@@ -416,23 +420,22 @@ class Node implements Arrayable, Jsonable
 	 * @return string
 	 * @throws UndeterminedPropertyException
 	 */
-	public function toJson($options = 0)
+	public function toJson($options = 0): string
 	{
 		return $this->collection()->toJson($options);
 	}
 
 
 	/**
-	 * @param Node $node
+	 * @param Node|null $node
 	 * @return Node
-	 * @throws UndeterminedPropertyException
 	 */
 	protected function updateParentalLinks(Node $node = null): Node
 	{
 		$node = $node ?: $this;
 
 		foreach ($node->getChildren() as $child) {
-			if ($child instanceof Node) {
+			if ($child instanceof self) {
 				$child->setParent($node);
 				$this->updateParentalLinks($child);
 			}
@@ -443,11 +446,11 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * @param array|string $data
-	 * @param Node|null    $node
-	 * @param bool         $ignoreNonExistingNodes
+	 * @param mixed     $data
+	 * @param Node|null $node
+	 * @param bool      $ignoreNonExistingNodes
 	 */
-	protected function fillNodeWithData($data, Node $node = null, bool $ignoreNonExistingNodes = false)
+	protected function fillNodeWithData($data, Node $node = null, bool $ignoreNonExistingNodes = false): void
 	{
 		$node = $node ?: $this;
 
@@ -494,12 +497,15 @@ class Node implements Arrayable, Jsonable
 	 * @return Collection
 	 * @throws UndeterminedPropertyException
 	 */
-	protected function collection()
+	protected function collection(): Collection
 	{
 		return collect($this->getChildren(false))
 			->mapWithKeys(static function(Node $node) {
 				if ($node instanceof NamedNode) {
-					return [ $node->getName() => $node->toArray() ];
+					return [
+						$node->getName() =>
+							$node instanceof Property && ! $node->isBag() ? $node->getValue() : $node->toArray(),
+					];
 				}
 				return [ $node->toArray() ];
 			});
@@ -508,11 +514,19 @@ class Node implements Arrayable, Jsonable
 
 	/**
 	 * @param string|null $name
-	 * @param string|null $value
+	 * @param mixed|null  $value
 	 * @return mixed
 	 */
 	private static function stripPropertyNameInValue(string $name = null, $value = null)
 	{
+		if (is_array($value)) {
+			return collect($value)
+				->mapWithKeys(static function($v, $k) use ($name) {
+					return [ $k => self::stripPropertyNameInValue($name, $v) ];
+				})
+				->all();
+		}
+
 		return is_string($value) && strpos($value, "$name=") === 0
 			? substr($value, strlen("$name="))
 			: $value;

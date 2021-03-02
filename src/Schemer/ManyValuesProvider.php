@@ -35,5 +35,5 @@ interface ManyValuesProvider extends ValueProvider
 	 * @param  Property $property
 	 * @return ManyValuesProvider
 	 */
-	public function setProperty(Property $property);
+	public function setProperty(Property $property): ValueProvider;
 }

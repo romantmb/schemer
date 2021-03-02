@@ -6,8 +6,11 @@ use Schemer\Extensions\FormExtender;
 use Schemer\Extensions\FormInputSpecification;
 use Schemer\Extensions\FormsForSchemer;
 use Schemer\Extensions\Transformers\SchemePathToInputNameTransformer;
+use Schemer\ManyValuesProvider;
 use Schemer\Node;
+use Schemer\Property;
 use Schemer\Scheme;
+use Schemer\UserValueProvider;
 use Schemer\Validators\Inputs\BooleanInput;
 use Schemer\Validators\Inputs\NullableBooleanInput;
 use Schemer\Validators\Inputs\NullableTextualInput;
@@ -15,6 +18,7 @@ use Schemer\Validators\Inputs\NumericInput;
 use Schemer\Validators\Inputs\CustomInput;
 use Schemer\Exceptions\InvalidValueException;
 use Schemer\Validators\Inputs\TextualInput;
+use Schemer\ValueProvider;
 use Tracy\Debugger;
 
 
@@ -37,7 +41,7 @@ final class PrizeIdentifierValidator extends CustomInput
 			$this->value = (int) $this->value;
 		}
 
-		return is_int($this->value) && $this->value > 0
+		return (is_int($this->value) && $this->value > 0)
 			|| in_array($this->value, self::$prizeRankSymbols)
 			|| self::isArrayOfIds($this->value);
 	}
@@ -107,57 +111,75 @@ final class SimpleFormBuilder implements FormExtender
 		$this->form = & $form;
 	}
 
-	public function addSelect(FormInputSpecification $spec)
+	public function addSelect(FormInputSpecification $spec): void
 	{
-		$input = sprintf(
-			'<select name="%s"%s>%s</select>',
-			$spec->getInputName(),
-			$spec->isDisabled() ? ' disabled' : '',
-			implode('', collect([ null => '(choose)' ] + $spec->getOptions())->map(function($option, $key) use ($spec) {
+		$this->form .= self::labeled(
+			$spec,
+			sprintf(
+				'<select name="%s"%s>%s</select>',
+				$spec->getInputName(),
+				$spec->isDisabled() ? ' disabled' : '',
+				implode('', collect([ null => '(choose)' ] + $spec->getOptions())->map(function($option, $key) use ($spec) {
+					return sprintf(
+						'<option value="%s"%s>%s</option>',
+						$key,
+						$spec->getValue() === $key ? ' selected' : '',
+						$option
+					);
+				})->all())
+			)
+		);
+	}
+
+	public function addSwitch(FormInputSpecification $spec): void
+	{
+		$this->form .= self::labeled(
+			$spec,
+			sprintf(
+				'<input type="checkbox" name="%s" value="true"%s%s>',
+				$spec->getInputName(),
+				$spec->getValue() === true ? ' checked' : '',
+				$spec->isDisabled() ? ' disabled' : ''
+			)
+		);
+	}
+
+	public function addText(FormInputSpecification $spec): void
+	{
+		$this->form .= self::labeled(
+			$spec,
+			sprintf(
+				'<input type="text" name="%s" value="%s"%s>',
+				$spec->getInputName(),
+				is_array($value = $spec->getValue()) ? implode(',', $value) : $value,
+				$spec->isDisabled() ? ' disabled' : ''
+			)
+		);
+	}
+
+	public function addCheckboxList(FormInputSpecification $spec): void
+	{
+		$this->form .=
+			implode('', collect($spec->getOptions())->map(function($option, $key) use ($spec) {
 				return sprintf(
-					'<option value="%s"%s>%s</option>',
+					'<input type="checkbox" name="%s[]" value="%s"%s%s>%s</input>',
+					$spec->getInputName(),
 					$key,
-					$spec->getValue() === $key ? ' selected' : '',
+					$spec->getValue() === $key ? ' checked' : '',
+					$spec->isDisabled() ? ' disabled' : '',
 					$option
 				);
-			})->all())
-		);
-
-		$this->form .=
-			sprintf('<label for="%s">%s</label>', $spec->getInputName(), ucfirst($spec->getLabel()))
-			. '<br>' . $input . '<br><br>';
-	}
-
-	public function addSwitch(FormInputSpecification $spec)
-	{
-		$input = sprintf(
-			'<input type="checkbox" name="%s" value="true"%s%s>',
-			$spec->getInputName(),
-			$spec->getValue() === true ? ' checked' : '',
-			$spec->isDisabled() ? ' disabled' : ''
-		);
-
-		$this->form .=
-			sprintf('<label for="%s">%s</label>', $spec->getInputName(), ucfirst($spec->getLabel()))
-			. '<br>' . $input . '<br><br>';
-	}
-
-	public function addText(FormInputSpecification $spec)
-	{
-		$input = sprintf(
-			'<input type="text" name="%s" value="%s"%s>',
-			$spec->getInputName(),
-			is_array($value = $spec->getValue()) ? implode(',', $value) : $value,
-			$spec->isDisabled() ? ' disabled' : ''
-		);
-
-		$this->form .=
-			sprintf('<label for="%s">%s</label>', $spec->getInputName(), ucfirst($spec->getLabel()))
-			. '<br>' . $input . '<br><br>';
+			})->all());
 	}
 
 	public function addError(string $message, string $inputName = null)
 	{
+	}
+
+	private static function labeled(FormInputSpecification $spec, string $input): string
+	{
+		return sprintf('<label for="%s">%s</label>', $spec->getInputName(), ucfirst($spec->getLabel()))
+			. '<br>' . $input . '<br><br>';
 	}
 }
 
@@ -167,7 +189,7 @@ final class SimpleFormBuilder implements FormExtender
  */
 final class SimpleTestCase
 {
-	public static function run()
+	public static function run(): void
 	{
 		if (isset($_POST['schemeId'])) {
 			$schemeId = ucfirst($_POST['schemeId']);
@@ -252,6 +274,24 @@ final class SimpleTestCase
 								])
 							)
 						)),
+
+					Scheme::prop('rounds', new class(CustomInput::class) extends UserValueProvider implements ManyValuesProvider {
+
+						public function getValues(): array
+						{
+							return array_merge([ 'all' ], range(1, 10 ));
+						}
+
+						public function preserveKeys(): bool
+						{
+							return false;
+						}
+
+						public function multipleValues(): bool
+						{
+							return true;
+						}
+					}),
 
 					Scheme::prop('interval',
 
@@ -375,7 +415,7 @@ final class SimpleTestCase
 		return $scheme;
 	}
 
-	private static function renderFormsForScheme(Node $scheme)
+	private static function renderFormsForScheme(Node $scheme): void
 	{
 		echo $form = sprintf('<form action="%s" method="post">', basename(__FILE__));
 
@@ -407,7 +447,7 @@ final class SimpleTestCase
 		echo $form . '</form>';
 	}
 
-	private static function handleSchemeUpdate(Node $scheme)
+	private static function handleSchemeUpdate(Node $scheme): void
 	{
 		$values = array_filter($_POST, function(& $value, $key) {
 			return strpos($key, SchemePathToInputNameTransformer::INPUT_PREFIX) === 0;
@@ -431,7 +471,7 @@ final class SimpleTestCase
 		exit;
 	}
 
-	private static function print(Node $scheme)
+	private static function print(Node $scheme): void
 	{
 		echo "<pre style=\"border: 1px solid rgba(0,0,0,.1)\"><code class=\"language-json\">" . htmlspecialchars($scheme->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . "</code></pre>"
 			. "<link href=\"../assets/plugins/prismjs/prism.css\" rel=\"stylesheet\" />"

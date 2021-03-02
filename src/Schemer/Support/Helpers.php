@@ -20,7 +20,7 @@ class Helpers
 	public static function export($value): string
 	{
 		if (is_array($value)) {
-			return implode(', ', array_map(function($val) {
+			return implode(', ', array_map(static function($val) {
 				return self::export($val);
 			}, $value));
 		}
@@ -33,10 +33,18 @@ class Helpers
 
 	/**
 	 * @param mixed $value
-	 * @return bool|float|int|null
+	 * @return mixed
 	 */
 	public static function sanitizeValue($value)
 	{
+		if (is_array($value)) {
+			return collect($value)
+				->mapWithKeys(static function($v, $k) {
+					return [ $k => self::sanitizeValue($v) ];
+				})
+				->all();
+		}
+
 		if (! is_string($value)) {
 			return $value;
 		}

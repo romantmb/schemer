@@ -20,6 +20,7 @@ use Schemer\Exceptions\ItemNotFoundException;
 use Schemer\Exceptions\InvalidUserInputException;
 use League\Fractal\TransformerAbstract;
 use InvalidArgumentException;
+use Exception;
 
 
 final class FormsForSchemer
@@ -37,7 +38,7 @@ final class FormsForSchemer
 	private $slugTransformerClass;
 
 	/** @var callable */
-	private $filter;
+	private $_filter;
 
 	/** @var callable */
 	private $mapper;
@@ -49,10 +50,10 @@ final class FormsForSchemer
 	private $onValidate;
 
 	/** @var callable */
-	private $onError;
+	private $_onError;
 
 	/** @var callable */
-	private $onSuccess;
+	private $_onSuccess;
 
 
 	/**
@@ -108,7 +109,7 @@ final class FormsForSchemer
 	 * @param callable $mapper
 	 * @return $this
 	 */
-	public function map(callable $mapper)
+	public function map(callable $mapper): self
 	{
 		$this->flush();
 
@@ -126,7 +127,7 @@ final class FormsForSchemer
 	{
 		$this->flush();
 
-		$this->filter = $filter;
+		$this->_filter = $filter;
 
 		return $this;
 	}
@@ -145,7 +146,7 @@ final class FormsForSchemer
 			if ($spec->isSelect()) {
 				$this->formExtender->addSelect($spec);
 
-			} elseif ($spec->isMultipleSelect()) {
+			} elseif ($spec->isMultiSelect()) {
 				$this->formExtender->addCheckboxList($spec);
 
 			} elseif ($spec->isSwitch()) {
@@ -172,7 +173,7 @@ final class FormsForSchemer
 			}
 
 			$this->fetchedInputSpecs['flat'] = $this->fetchSpecs($this->inputSpecs)
-				->filter($this->filter)
+				->filter($this->_filter)
 				->map(function(FormInputSpecification $spec) {
 					if ($this->mapper) {
 						($this->mapper)($spec);
@@ -202,7 +203,7 @@ final class FormsForSchemer
 				})
 				->map(function(CollectionOfSchemeInputs $stepGroup) {
 					return $this->fetchSpecs($stepGroup)
-						->filter($this->filter)
+						->filter($this->_filter)
 						->map(function(FormInputSpecification $spec) {
 							if ($this->mapper) {
 								($this->mapper)($spec);
@@ -223,14 +224,17 @@ final class FormsForSchemer
 	 * @param Node          $scheme
 	 * @param array         $formValues
 	 * @param callable|null $sanitizer
+	 * @throws Exception
 	 */
-	public function updateScheme(Node $scheme, array $formValues, callable $sanitizer = null)
+	public function updateScheme(Node $scheme, array $formValues, callable $sanitizer = null): void
 	{
 		$uniqueKeys = collect();
 
 		foreach ($formValues as $id => $value) {
 
-			$spec = $this->getFetchedSpec($id);
+			if (! $spec = $this->getFetchedSpec($id)) {
+				continue;
+			}
 
 			$path = $spec->getPath();
 
@@ -245,8 +249,8 @@ final class FormsForSchemer
 
 				$this->validation($scheme, $spec, $value);
 
-				if ($spec->getProperty()->isUniqueKey()
-					&& (! is_string($value) || strpos($value, '=') === false)) {
+				if ((! is_string($value) || strpos($value, '=') === false)
+					&& $spec->getProperty()->isUniqueKey()) {
 					$value = sprintf('%s=%s', $spec->getName(), is_array($value) ? implode(',', $value) : $value);
 				}
 
@@ -255,8 +259,8 @@ final class FormsForSchemer
 				}
 
 			} catch (SchemerException $e) {
-				if ($this->onError !== null) {
-					($this->onError)($e, $spec, $value);
+				if ($this->_onError !== null) {
+					($this->_onError)($e, $spec, $value);
 					return;
 				}
 
@@ -269,8 +273,8 @@ final class FormsForSchemer
 			}
 		}
 
-		if ($this->onSuccess !== null) {
-			($this->onSuccess)($scheme);
+		if ($this->_onSuccess !== null) {
+			($this->_onSuccess)($scheme);
 		}
 	}
 
@@ -293,7 +297,7 @@ final class FormsForSchemer
 	 */
 	public function onError(callable $callback): FormsForSchemer
 	{
-		$this->onError = $callback;
+		$this->_onError = $callback;
 
 		return $this;
 	}
@@ -305,7 +309,7 @@ final class FormsForSchemer
 	 */
 	public function onSuccess(callable $callback): FormsForSchemer
 	{
-		$this->onSuccess = $callback;
+		$this->_onSuccess = $callback;
 
 		return $this;
 	}
@@ -315,8 +319,9 @@ final class FormsForSchemer
 	 * @param Node                   $scheme
 	 * @param FormInputSpecification $spec
 	 * @param mixed                  $value
+	 * @throws Exception
 	 */
-	private function validation(Node $scheme, FormInputSpecification $spec, $value)
+	private function validation(Node $scheme, FormInputSpecification $spec, $value): void
 	{
 		$property = $spec->getProperty();
 
@@ -367,7 +372,7 @@ final class FormsForSchemer
 								->setPropertyWithUniqueKey($candidateUniqueKeyProperty)
 						);
 
-						if ($property->isUniqueKey()) {
+						if ($property && $property->isUniqueKey()) {
 							$candidateUniqueKeyProperty = $property;
 						}
 					}
@@ -381,8 +386,8 @@ final class FormsForSchemer
 
 				} elseif ($node instanceof Property) {
 
-					if ($node->getValueProvider() instanceof UserValueProvider
-						|| $node->getValueProvider() instanceof StaticArrayProvider) {
+					if (($provider = $node->getValueProvider()) instanceof UserValueProvider
+						|| $provider instanceof StaticArrayProvider) {
 
 						$founds->push(new FormInputSpecification($node, $this));
 					}
@@ -402,7 +407,7 @@ final class FormsForSchemer
 	}
 
 
-	private function flush()
+	private function flush(): void
 	{
 		$this->fetchedInputSpecs = [ 'flat' => null, 'grouped' => null ];
 	}

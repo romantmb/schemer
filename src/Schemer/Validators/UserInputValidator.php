@@ -100,21 +100,23 @@ final class UserInputValidator
 	 * @return static
 	 * @throws InvalidArgumentException
 	 */
-	public static function scheme()
+	public static function scheme(): UserInputValidator
 	{
-		return new static(func_get_args());
+		return new self(func_get_args());
 	}
 
 
 	/**
-	 * @param  Input $input
+	 * @param Input $input
 	 * @return static
-	 * @throws InvalidArgumentException
+	 * @throws Exception
 	 */
 	public static function simple(Input $input)
 	{
-		$self = new static([ $input ]);
+		$self = new self([ $input ]);
+
 		$self->singleInput = true;
+
 		return $self->fetch();
 	}
 
@@ -122,22 +124,26 @@ final class UserInputValidator
 	/**
 	 * Rejects data item, if callback returns true
 	 *
-	 * @param  callable $callback called with argument Input
+	 * @param callable $callback called with argument Input
 	 * @return static
 	 * @throws InvalidArgumentException
 	 */
-	public function reject($callback)
+	public function reject(callable $callback): UserInputValidator
 	{
 		if (! Callback::check($callback)) {
 			throw new InvalidArgumentException('Callback function is not callable.');
 		}
+
 		$inputs = [];
+
 		foreach ($this->inputs as $input) {
 			if (! $callback($input)) {
 				$inputs[] = $input;
 			}
 		}
+
 		$this->inputs = $inputs;
+
 		return $this;
 	}
 
@@ -147,9 +153,10 @@ final class UserInputValidator
 	 *
 	 * @return static
 	 */
-	public function snakeCaseKeys()
+	public function snakeCaseKeys(): UserInputValidator
 	{
 		$this->convertKeysToSnakeCase = true;
+
 		return $this;
 	}
 
@@ -159,9 +166,10 @@ final class UserInputValidator
 	 *
 	 * @return static
 	 */
-	public function ignoreUndefined()
+	public function ignoreUndefined(): UserInputValidator
 	{
 		$this->ignoreUndefined = true;
+
 		return $this;
 	}
 
@@ -173,16 +181,19 @@ final class UserInputValidator
 	 * @return static
 	 * @throws InvalidArgumentException
 	 */
-	public function onInvalid($handler)
+	public function onInvalid($handler): UserInputValidator
 	{
 		if ($handler === null) {
 			// default handler
 			$handler = new InvalidUserInputException('%item% %issue%.');
 		}
+
 		if (! $handler instanceof Exception && ! is_string($handler)) {
 			throw new InvalidArgumentException('Handler must be an error message (string) or an exception to be thrown.');
 		}
+
 		$this->onInvalid = $handler;
+
 		return $this;
 	}
 
@@ -190,9 +201,9 @@ final class UserInputValidator
 	/**
 	 * Returns validated data or false, if not valid
 	 *
-	 * @param  Input[] $inputs
+	 * @param Input[] $inputs
 	 * @return array|bool|mixed
-	 * @throws InvalidArgumentException
+	 * @throws Exception
 	 */
 	public function fetch(array $inputs = [])
 	{
@@ -208,14 +219,14 @@ final class UserInputValidator
 		$data = [];
 		foreach ($this->inputs as $index => $input) {
 
-			if ($input->isNullable() && $input->isUndefined() && $this->ignoreUndefined) {
+			if ($this->ignoreUndefined && $input->isNullable() && $input->isUndefined()) {
 				continue;
 			}
 
 			if ($input->isValid()) {
 				if ($key = $input->getKey()) {
 					if (array_key_exists($key, $data)) {
-						$i = $index + 1; $_s = [ 1 => 'st', 'nd', 'rd']; $i = $i . ($i > 3 ? 'th' : $_s[$i]);
+						$i = $index + 1; $_s = [ 1 => 'st', 'nd', 'rd']; $i .= ($i > 3 ? 'th' : $_s[ $i ]);
 						$msg = sprintf("Ambiguous key '%s' for %s input item. Set input key explicitly with setKey().", $key, $i);
 						throw new InvalidArgumentException($msg);
 					}
@@ -237,9 +248,9 @@ final class UserInputValidator
 				$exceptionName = get_class($this->onInvalid);
 				throw new $exceptionName($errorMsg);
 
-			} else {
-				return false;
 			}
+
+			return false;
 		}
 
 		return $this->singleInput ? @$data[0] : $data;
@@ -249,9 +260,9 @@ final class UserInputValidator
 	/**
 	 * Returns validated data except items with null value
 	 *
-	 * @param  Input[] $inputs
+	 * @param Input[] $inputs
 	 * @return array
-	 * @throws InvalidArgumentException
+	 * @throws Exception
 	 */
 	public function fetchNotNulls(array $inputs = [])
 	{
@@ -272,15 +283,18 @@ final class UserInputValidator
 	 * @return static
 	 * @throws InvalidArgumentException
 	 */
-	public function setInputs(array $inputs = [])
+	public function setInputs(array $inputs = []): UserInputValidator
 	{
 		if ($this->inputs) {
 			throw new InvalidArgumentException('Cannot redefine existing input scheme. Call fetch() without argument.');
 		}
+
 		$this->inputs = [];
+
 		foreach ($inputs as $input) {
 			$this->addInput($input);
 		}
+
 		return clone $this;
 	}
 
@@ -288,26 +302,27 @@ final class UserInputValidator
 	/**
 	 * @param  Input $input
 	 * @return static
-	 *@internal
+	 * @internal
 	 */
-	private function addInput(Input $input)
+	private function addInput(Input $input): UserInputValidator
 	{
 		$this->inputs[] = $input;
+
 		return $this;
 	}
 
 
 	/**
-	 * @param  string $pattern
-	 * @param  Input  $input
+	 * @param string $pattern
+	 * @param Input  $input
 	 * @return string
 	 */
-	private static function createErrorMessage($pattern, Input $input)
+	private static function createErrorMessage(string $pattern, Input $input): string
 	{
 		$msg = $pattern;
-		$itemName = $input->getName() ?: (($key = $input->getKey()) ? "'$key'" : null) ?: 'item';
-		$msg = str_replace('%item%', $itemName, $msg);
-		$msg = str_replace('%issue%', $input->getIssue(), $msg);
+		$genName = ($key = $input->getKey()) ? "'$key'" : null;
+		$itemName = $input->getName() ?: $genName ?: 'item';
+		$msg = str_replace([ '%item%', '%issue%' ], [ $itemName, $input->getIssue() ], $msg);
 		$msg = Strings::firstUpper($msg);
 		return $msg;
 	}

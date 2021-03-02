@@ -31,7 +31,7 @@ interface ValueProvider
 	 * @param  Property $property
 	 * @return ValueProvider
 	 */
-	public function setProperty(Property $property);
+	public function setProperty(Property $property): ValueProvider;
 
 
 	/**

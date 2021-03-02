@@ -23,5 +23,5 @@ interface NamedNodeWithValue extends NamedNode
 	 * @param  mixed $value
 	 * @return NamedNodeWithValue
 	 */
-	public function setValue($value);
+	public function setValue($value): NamedNodeWithValue;
 }

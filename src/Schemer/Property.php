@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpUnused */
+<?php
 
 /**
  * Schemer
@@ -118,7 +118,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 * @param  mixed|null $value
 	 * @return Property
 	 */
-	public function setValue($value): self
+	public function setValue($value): NamedNodeWithValue
 	{
 		if ($this->isBag()) {
 			throw new BadMethodCallException('Cannot set value of bag property.');
@@ -201,7 +201,7 @@ final class Property extends Node implements NamedNodeWithValue
 	 * @return Property
 	 * @throws InvalidNodeException
 	 */
-	public function on($value, Node $node): Property
+	public function on(string $value, Node $node): Property
 	{
 		$key = self::getConditionalKey($value);
 
@@ -266,7 +266,7 @@ final class Property extends Node implements NamedNodeWithValue
 	public function getSibling(string $name): ?Property
 	{
 		foreach ($this->getSiblings() as $sibling) {
-			if ($sibling instanceof static && $sibling->getName() === $name) {
+			if ($sibling instanceof self && $sibling->getName() === $name) {
 				return $sibling;
 			}
 		}
@@ -322,23 +322,10 @@ final class Property extends Node implements NamedNodeWithValue
 
 
 	/**
-	 * @return array|mixed|null
+	 * @param int $options
+	 * @return string
 	 */
-	public function toArray()
-	{
-		if (! $this->isBag()) {
-			return $this->getValue();
-		}
-
-		return parent::toArray();
-	}
-
-
-	/**
-	 * @param  int $options
-	 * @return mixed|string|null
-	 */
-	public function toJson($options = 0)
+	public function toJson($options = 0): string
 	{
 		if (! $this->isBag()) {
 			return $this->getValue();

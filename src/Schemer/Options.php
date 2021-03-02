@@ -71,7 +71,7 @@ final class Options extends Node implements NamedNode
 	 * @param  mixed $items
 	 * @return static
 	 */
-	public function setItems($items)
+	public function setItems($items): Options
 	{
 		$this->reset();
 
@@ -87,7 +87,7 @@ final class Options extends Node implements NamedNode
 	 * @param  mixed $candidates
 	 * @return static
 	 */
-	public function setCandidates($candidates)
+	public function setCandidates($candidates): Options
 	{
 		$this->clear();
 
@@ -100,13 +100,13 @@ final class Options extends Node implements NamedNode
 
 
 	/**
-	 * @param mixed      $item
+	 * @param mixed      $child
 	 * @param mixed|null $key
 	 * @return Options
 	 */
-	public function add($item, $key = null): Options
+	public function add($child, $key = null): Node
 	{
-		return $this->addItem($this->items, $item, $key);
+		return $this->addItem($this->items, $child, $key);
 	}
 
 
@@ -148,7 +148,6 @@ final class Options extends Node implements NamedNode
 			]);
 		}
 
-		/** @var Collection $candidates */
 		$candidates = collect($this->candidates)
 			->map(static function(Node $item) { return $item->getChildren(); })
 			->flatten()
@@ -227,7 +226,7 @@ final class Options extends Node implements NamedNode
 	 * @param bool        $checkIfExistsOnly
 	 * @return Node|ArrayItem|null
 	 */
-	public function pick($definition, $value = null, $checkIfExistsOnly = false)
+	public function pick(string $definition, $value = null, bool $checkIfExistsOnly = false)
 	{
 		if (strpos($definition, '=') !== false) {
 			[ $definition, $value ] = explode('=', $definition);
@@ -292,9 +291,10 @@ final class Options extends Node implements NamedNode
 
 
 	/**
-	 * @param array $data
+	 * @param array|string $data
+	 * @return Node
 	 */
-	public function initialize($data)
+	public function initialize($data): Node
 	{
 		if ($this->containsPrimitives()) {
 
@@ -304,7 +304,7 @@ final class Options extends Node implements NamedNode
 				}
 			}
 
-			return;
+			return $this;
 		}
 
 		$candidates = $this->getCandidates();
@@ -348,6 +348,8 @@ final class Options extends Node implements NamedNode
 
 			$this->fillNodeWithData($properties->all(), $option);
 		}
+
+		return $this;
 	}
 
 
@@ -422,7 +424,7 @@ final class Options extends Node implements NamedNode
 	 * @return Node|ArrayItem|null
 	 * @internal
 	 */
-	private function findCandidate($by, callable $onSuccess = null)
+	private function findCandidate(string $by, callable $onSuccess = null)
 	{
 		foreach ($this->candidates as $candidate) {
 
@@ -443,7 +445,7 @@ final class Options extends Node implements NamedNode
 	 * @param string|null $key
 	 * @return Options
 	 */
-	private function addItem(& $into, $item, $key = null): Options
+	private function addItem(array & $into, $item, $key = null): Options
 	{
 		if ($item instanceof ArrayItem) {
 			$key = $item->getKey();

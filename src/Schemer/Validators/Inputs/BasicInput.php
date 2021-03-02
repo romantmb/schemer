@@ -1,4 +1,12 @@
-<?php
+<?php /** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
 
 /**
  * Schemer
@@ -85,7 +93,7 @@ abstract class BasicInput implements Input
 	{
 		if (is_string($callback)) {
 			$args = array_slice(func_get_args(), 1);
-			$callback = function($value) use ($callback, $args) {
+			$callback = static function($value) use ($callback, $args) {
 				$func = [ 'Nette\Utils\Strings', $callback ];
 				Callback::check($func);
 				return call_user_func_array($func, array_merge([ $value ], $args));
@@ -159,7 +167,7 @@ abstract class BasicInput implements Input
 	 */
 	function getValue($unmodified = false)
 	{
-		$modifier = $this->outputModifier ?: function($value) { return $value; };
+		$modifier = $this->outputModifier ?: static function($value) { return $value; };
 		return $unmodified ? $this->value : $modifier($this->value);
 	}
 

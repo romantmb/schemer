@@ -33,7 +33,7 @@ final class Group extends Node implements Iterator
 
 		$this->position = 0;
 
-		if (count($siblings) === 1 && is_array($siblings)) {
+		if (is_array($siblings) && count($siblings) === 1) {
 			$siblings = $siblings[0];
 		}
 
@@ -51,8 +51,9 @@ final class Group extends Node implements Iterator
 
 	/**
 	 * @param Node $child
+	 * @return Node
 	 */
-	public function add(Node $child)
+	public function add(Node $child): Node
 	{
 		throw new BadMethodCallException('Group members must be defined in constructor.');
 	}
@@ -64,7 +65,7 @@ final class Group extends Node implements Iterator
 	}
 
 
-	public function next()
+	public function next(): void
 	{
 		++$this->position;
 	}
@@ -82,7 +83,7 @@ final class Group extends Node implements Iterator
 	}
 
 
-	public function rewind()
+	public function rewind(): void
 	{
 		$this->position = 0;
 	}
@@ -98,9 +99,10 @@ final class Group extends Node implements Iterator
 
 
 	/**
-	 * @param  int $options
+	 * @param int $options
+	 * @return string
 	 */
-	public function toJson($options = 0)
+	public function toJson($options = 0): string
 	{
 		throw new BadMethodCallException('Cannot export scheme group into JSON.');
 	}

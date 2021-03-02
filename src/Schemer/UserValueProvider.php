@@ -12,6 +12,7 @@ use Schemer\Validators\UserInputValidator;
 use Schemer\Exceptions\InvalidUserInputException;
 use Schemer\Exceptions\InvalidValueException;
 use InvalidArgumentException;
+use Exception;
 
 
 class UserValueProvider implements ValueProvider
@@ -48,6 +49,7 @@ class UserValueProvider implements ValueProvider
 	/**
 	 * @param $value
 	 * @return mixed
+	 * @throws Exception
 	 */
 	public function setValue($value)
 	{
@@ -77,7 +79,7 @@ class UserValueProvider implements ValueProvider
 	/**
 	 * To be overloaded if necessary
 	 *
-	 * @return null
+	 * @return mixed|null
 	 */
 	public function getHumanValue()
 	{
@@ -87,7 +89,7 @@ class UserValueProvider implements ValueProvider
 
 	/**
 	 * @param  Property $property
-	 * @return ValueProvider
+	 * @return UserValueProvider
 	 */
 	public function setProperty(Property $property): ValueProvider
 	{

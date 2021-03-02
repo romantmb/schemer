@@ -92,9 +92,9 @@ class StaticArrayProvider implements ManyValuesProvider
 
 	/**
 	 * @param  Property $property
-	 * @return ManyValuesProvider
+	 * @return StaticArrayProvider
 	 */
-	public function setProperty(Property $property): ManyValuesProvider
+	public function setProperty(Property $property): ValueProvider
 	{
 		$this->property = $property;
 

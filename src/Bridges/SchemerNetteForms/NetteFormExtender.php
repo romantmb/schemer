@@ -31,7 +31,7 @@ final class NetteFormExtender implements FormExtender
 	/**
 	 * @param FormInputSpecification $spec
 	 */
-	public function addSelect(FormInputSpecification $spec)
+	public function addSelect(FormInputSpecification $spec): void
 	{
 		$control = $this->form->addSelect($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
 			->setPrompt('(choose one)')
@@ -46,7 +46,7 @@ final class NetteFormExtender implements FormExtender
 	/**
 	 * @param FormInputSpecification $spec
 	 */
-	public function addCheckboxList(FormInputSpecification $spec)
+	public function addCheckboxList(FormInputSpecification $spec): void
 	{
 		$control = $this->form->addCheckboxList($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
 			->setRequired($spec->isRequired())
@@ -60,7 +60,7 @@ final class NetteFormExtender implements FormExtender
 	/**
 	 * @param FormInputSpecification $spec
 	 */
-	public function addSwitch(FormInputSpecification $spec)
+	public function addSwitch(FormInputSpecification $spec): void
 	{
 		$control = $this->form->addCheckbox($spec->getInputName(), $spec->getLabel())
 			->setRequired($spec->isRequired())
@@ -74,7 +74,7 @@ final class NetteFormExtender implements FormExtender
 	/**
 	 * @param FormInputSpecification $spec
 	 */
-	public function addText(FormInputSpecification $spec)
+	public function addText(FormInputSpecification $spec): void
 	{
 		$control = $this->form->addText($spec->getInputName(), $spec->getLabel())
 			->setRequired($spec->isRequired())

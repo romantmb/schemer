@@ -60,11 +60,10 @@ class FormInputSpecification
 
 		$this->service = $service;
 
-		if (is_array($property->getValueProvider()) || ! empty($property->getOptionalValues())) {
+		if (is_array($userValueProvider = $property->getValueProvider()) || ! empty($property->getOptionalValues())) {
 
-			if (($userValueProvider = $property->getValueProvider()) && $userValueProvider instanceof ManyValuesProvider
-				&& $userValueProvider->multipleValues()) {
-				$this->type = 'multipleselect';
+			if ($userValueProvider instanceof ManyValuesProvider && $userValueProvider->multipleValues()) {
+				$this->type = 'multiselect';
 
 			} else {
 				$this->type = 'select';
@@ -99,9 +98,9 @@ class FormInputSpecification
 	/**
 	 * @return bool
 	 */
-	public function isMultipleSelect(): bool
+	public function isMultiSelect(): bool
 	{
-		return $this->type === 'multipleselect';
+		return $this->type === 'multiselect';
 	}
 
 
@@ -128,7 +127,7 @@ class FormInputSpecification
 		}
 
 		if ($this->isSelect()) {
-			return $this->required = $this->property->isUniqueKey() || $this->property->hasAnyConditionalSiblings();
+			return $this->required = ($this->property->isUniqueKey() || $this->property->hasAnyConditionalSiblings());
 		}
 
 		if ($this->property->getValueProvider() instanceof ValueProvider) {
@@ -179,7 +178,7 @@ class FormInputSpecification
 	/**
 	 * @param object|null $control
 	 */
-	public function setFormControl(object $control = null)
+	public function setFormControl(object $control = null): void
 	{
 		$this->formControl = $control;
 	}
@@ -188,7 +187,7 @@ class FormInputSpecification
 	/**
 	 * @return object
 	 */
-	public function getFormControl()
+	public function getFormControl(): object
 	{
 		return $this->formControl;
 	}
@@ -271,7 +270,7 @@ class FormInputSpecification
 
 		$value = $this->property->getValue();
 
-		if (($this->isSelect() || $this->isMultipleSelect()) && $this->property->isInOptions()) {
+		if ($this->property->isInOptions() && ($this->isSelect() || $this->isMultiSelect())) {
 
 			if (is_array($value)) {
 				return collect($value)
@@ -296,8 +295,8 @@ class FormInputSpecification
 	{
 		$this->refreshPropertyInValueProvider();
 
-		if ($this->property->getValueProvider() instanceof UserValueProvider
-			&& ($value = $this->property->getValueProvider()->getHumanValue()) !== null) {
+		if (($provider = $this->property->getValueProvider()) && $provider instanceof UserValueProvider
+			&& ($value = $provider->getHumanValue()) !== null) {
 			return $value;
 		}
 
@@ -314,7 +313,7 @@ class FormInputSpecification
 	 */
 	public function getValidatorClass(): ?string
 	{
-		return ($provider = $this->property->getValueProvider()) instanceof UserValueProvider
+		return ($provider = $this->property->getValueProvider()) && $provider instanceof UserValueProvider
 			? $provider->getValidatorClass()
 			: null;
 	}
@@ -335,11 +334,20 @@ class FormInputSpecification
 	 */
 	public function setPropertyWithUniqueKey(Property $property = null): FormInputSpecification
 	{
-		if ($property !== null && $property->isUniqueKey() && $property !== $this->property) {
+		if ($property !== null && $property !== $this->property && $property->isUniqueKey()) {
 			$this->propertyWithUniqueKey = $property;
 		}
 
 		return $this;
+	}
+
+
+	/**
+	 * @return Property|null
+	 */
+	public function getPropertyWithUniqueKey(): ?Property
+	{
+		return $this->propertyWithUniqueKey;
 	}
 
 
@@ -382,7 +390,7 @@ class FormInputSpecification
 	 */
 	private function initializeOptions(): array
 	{
-		if ($this->isSelect() || $this->isMultipleSelect()) {
+		if ($this->isSelect() || $this->isMultiSelect()) {
 
 			$valueProvider = $this->property->getValueProvider();
 			$preserveKeys = $valueProvider instanceof ManyValuesProvider ? $valueProvider->preserveKeys() : false;
@@ -391,9 +399,11 @@ class FormInputSpecification
 			return collect($options)
 				->mapWithKeys(function($value, $key) use ($preserveKeys) {
 
+					$v = $preserveKeys ? $key : $value;
+
 					$key = $this->property->isInOptions()
-						? sprintf('%s=%s', $this->getName(), $preserveKeys ? $key : $value)
-						: ($preserveKeys ? $key : $value);
+						? sprintf('%s=%s', $this->getName(), $v)
+						: $v;
 
 					$title = $this->service->makeSlugHumanReadable(sprintf('%s:%s', $this->getName(), $value));
 

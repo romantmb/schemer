@@ -1,4 +1,6 @@
-<?php
+<?php /** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
 
 /**
  * Schemer
@@ -19,7 +21,7 @@ class ArrayOf extends NullableArrayOf
 	/**
 	 * @return bool
 	 */
-	function isValid(): bool
+	public function isValid(): bool
 	{
 		return is_array($this->values) && parent::isValid();
 	}
@@ -28,7 +30,7 @@ class ArrayOf extends NullableArrayOf
 	/**
 	 * @return bool
 	 */
-	function isNullable(): bool
+	public function isNullable(): bool
 	{
 		return true;
 	}
@@ -37,7 +39,7 @@ class ArrayOf extends NullableArrayOf
 	/**
 	 * @return string|null
 	 */
-	function getIssue(): ?string
+	public function getIssue(): ?string
 	{
 		if ($this->isNull()) {
 			return 'must be defined as array.';
