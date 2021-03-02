@@ -196,12 +196,12 @@ final class Property extends Node implements NamedNodeWithValue
 	/**
 	 * Defines conditional siblings for specific property value
 	 *
-	 * @param string $value
-	 * @param Node   $node
+	 * @param mixed $value
+	 * @param Node  $node
 	 * @return Property
 	 * @throws InvalidNodeException
 	 */
-	public function on(string $value, Node $node): Property
+	public function on($value, Node $node): Property
 	{
 		$key = self::getConditionalKey($value);
 
