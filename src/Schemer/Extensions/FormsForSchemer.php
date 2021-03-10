@@ -143,7 +143,10 @@ final class FormsForSchemer
 
 		$this->fetch()->each(function(FormInputSpecification $spec) {
 
-			if ($spec->isSelect()) {
+			if ($spec->isHidden()) {
+				$this->formExtender->addHidden($spec);
+
+			} elseif ($spec->isSelect()) {
 				$this->formExtender->addSelect($spec);
 
 			} elseif ($spec->isMultiSelect()) {
