@@ -36,6 +36,12 @@ interface FormExtender
 
 
 	/**
+	 * @param FormInputSpecification $spec
+	 */
+	public function addHidden(FormInputSpecification $spec);
+
+
+	/**
 	 * @param string      $message
 	 * @param string|null $inputName
 	 * @return mixed

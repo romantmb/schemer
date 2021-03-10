@@ -36,6 +36,9 @@ class FormInputSpecification
 	/** @var bool */
 	private $disabled = false;
 
+	/** @var bool */
+	private $hidden = false;
+
 	/** @var array */
 	private $options;
 
@@ -154,6 +157,15 @@ class FormInputSpecification
 
 
 	/**
+	 * @return bool
+	 */
+	public function isHidden(): bool
+	{
+		return $this->hidden;
+	}
+
+
+	/**
 	 * @return static
 	 */
 	public function setAsRequired(): FormInputSpecification
@@ -170,6 +182,17 @@ class FormInputSpecification
 	public function setAsDisabled(): FormInputSpecification
 	{
 		$this->disabled = true;
+
+		return $this;
+	}
+
+
+	/**
+	 * @return FormInputSpecification
+	 */
+	public function setAsHidden(): FormInputSpecification
+	{
+		$this->hidden = true;
 
 		return $this;
 	}

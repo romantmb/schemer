@@ -33,13 +33,13 @@ final class NetteFormExtender implements FormExtender
 	 */
 	public function addSelect(FormInputSpecification $spec): void
 	{
-		$control = $this->form->addSelect($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
-			->setPrompt('(choose one)')
-			->setRequired($spec->isRequired())
-			->setDisabled($spec->isDisabled())
-			->setDefaultValue($spec->getValue());
-
-		$spec->setFormControl($control);
+		$spec->setFormControl(
+			$this->form->addSelect($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
+				->setPrompt('(choose one)')
+				->setRequired($spec->isRequired())
+				->setDisabled($spec->isDisabled())
+				->setDefaultValue($spec->getValue())
+		);
 	}
 
 
@@ -48,12 +48,12 @@ final class NetteFormExtender implements FormExtender
 	 */
 	public function addCheckboxList(FormInputSpecification $spec): void
 	{
-		$control = $this->form->addCheckboxList($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
-			->setRequired($spec->isRequired())
-			->setDisabled($spec->isDisabled())
-			->setDefaultValue($spec->getValue());
-
-		$spec->setFormControl($control);
+		$spec->setFormControl(
+			$this->form->addCheckboxList($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
+				->setRequired($spec->isRequired())
+				->setDisabled($spec->isDisabled())
+				->setDefaultValue($spec->getValue())
+		);
 	}
 
 
@@ -62,12 +62,12 @@ final class NetteFormExtender implements FormExtender
 	 */
 	public function addSwitch(FormInputSpecification $spec): void
 	{
-		$control = $this->form->addCheckbox($spec->getInputName(), $spec->getLabel())
-			->setRequired($spec->isRequired())
-			->setDisabled($spec->isDisabled())
-			->setDefaultValue($spec->getValue());
-
-		$spec->setFormControl($control);
+		$spec->setFormControl(
+			$this->form->addCheckbox($spec->getInputName(), $spec->getLabel())
+				->setRequired($spec->isRequired())
+				->setDisabled($spec->isDisabled())
+				->setDefaultValue($spec->getValue())
+		);
 	}
 
 
@@ -76,12 +76,24 @@ final class NetteFormExtender implements FormExtender
 	 */
 	public function addText(FormInputSpecification $spec): void
 	{
-		$control = $this->form->addText($spec->getInputName(), $spec->getLabel())
-			->setRequired($spec->isRequired())
-			->setDisabled($spec->isDisabled())
-			->setDefaultValue($spec->getValue());
+		$spec->setFormControl(
+			$this->form->addText($spec->getInputName(), $spec->getLabel())
+				->setRequired($spec->isRequired())
+				->setDisabled($spec->isDisabled())
+				->setDefaultValue($spec->getValue())
+		);
+	}
 
-		$spec->setFormControl($control);
+
+	/**
+	 * @param FormInputSpecification $spec
+	 */
+	public function addHidden(FormInputSpecification $spec): void
+	{
+		$spec->setFormControl(
+			$this->form->addHidden($spec->getInputName())
+				->setDefaultValue($spec->getValue())
+		);
 	}
 
 
