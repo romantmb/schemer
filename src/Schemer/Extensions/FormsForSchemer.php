@@ -263,7 +263,7 @@ final class FormsForSchemer
 
 			} catch (SchemerException $e) {
 				if ($this->_onError !== null) {
-					($this->_onError)($e, $spec, $value);
+					if (($this->_onError)($e, $spec, $value) === true) { continue; } // ignore error & proceed
 					return;
 				}
 
