@@ -352,6 +352,15 @@ class FormInputSpecification
 
 
 	/**
+	 * @return bool
+	 */
+	public function hasAnyConditionalSiblings(): bool
+	{
+		return $this->property->hasAnyConditionalSiblings();
+	}
+
+
+	/**
 	 * @param Property|null $property
 	 * @return FormInputSpecification
 	 */

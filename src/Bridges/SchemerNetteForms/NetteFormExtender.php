@@ -39,6 +39,7 @@ final class NetteFormExtender implements FormExtender
 				->setRequired($spec->isRequired())
 				->setDisabled($spec->isDisabled())
 				->setDefaultValue($spec->getValue())
+				->setHtmlAttribute('data-has-conditional-siblings', $spec->hasAnyConditionalSiblings())
 		);
 	}
 
@@ -67,6 +68,7 @@ final class NetteFormExtender implements FormExtender
 				->setRequired($spec->isRequired())
 				->setDisabled($spec->isDisabled())
 				->setDefaultValue($spec->getValue())
+				->setHtmlAttribute('data-has-conditional-siblings', $spec->hasAnyConditionalSiblings())
 		);
 	}
 
