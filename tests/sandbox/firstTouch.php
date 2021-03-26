@@ -20,6 +20,10 @@ use Schemer\Exceptions\InvalidValueException;
 use Schemer\Validators\Inputs\TextualInput;
 use Schemer\ValueProvider;
 use Tracy\Debugger;
+use function Schemer\bag;
+use function Schemer\property;
+use function Schemer\candidates;
+use function Schemer\group;
 
 
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -172,6 +176,18 @@ final class SimpleFormBuilder implements FormExtender
 			})->all());
 	}
 
+	public function addHidden(FormInputSpecification $spec): void
+	{
+		$this->form .= self::labeled(
+			$spec,
+			sprintf(
+				'<input type="hidden" name="%s" value="%s">',
+				$spec->getInputName(),
+				is_array($value = $spec->getValue()) ? implode(',', $value) : $value
+			)
+		);
+	}
+
 	public function addError(string $message, string $inputName = null)
 	{
 	}
@@ -222,51 +238,51 @@ final class SimpleTestCase
 
 	private static function buildSchemeOne(): Node
 	{
-		return Scheme::bag(
+		return bag(
 
 			// just for purposes of this test
-			Scheme::prop('schemeId', 'one'),
+			property('schemeId', 'one'),
 
-			Scheme::candidates('draws',
+			candidates('draws',
 
-				Scheme::bag(
+				bag(
 
-					Scheme::prop('prizeId', PrizeIdentifierValidator::class)
+					property('prizeId', PrizeIdentifierValidator::class)
 						->uniqueKey(),
 
-					Scheme::prop('title', NullableTextualInput::class)
+					property('title', NullableTextualInput::class)
 						->default('(default title)'),
 
-					Scheme::prop('trigger', [
+					property('trigger', [
 						'human',
 						'robot',
 					]),
 
-					Scheme::prop('contentRestrictions',
-						Scheme::prop('alcohol', BooleanInput::class)
+					property('contentRestrictions',
+						property('alcohol', BooleanInput::class)
 							->default(false),
-						Scheme::prop('tobacco', BooleanInput::class)
+						property('tobacco', BooleanInput::class)
 							->default(false),
-						Scheme::prop('sexual', BooleanInput::class)
+						property('sexual', BooleanInput::class)
 							->default(false),
-						Scheme::prop('explicit', BooleanInput::class)
+						property('explicit', BooleanInput::class)
 							->default(false)
 					),
 
-					Scheme::prop('mechanics', [
+					property('mechanics', [
 						'random',
 						'nth',
 						'jury',
 					])
 						->default('random')
 
-						->on('nth', Scheme::group(
+						->on('nth', group(
 
-							Scheme::prop('nth',
+							property('nth',
 
-								Scheme::prop('n', NumericInput::class),
+								property('n', NumericInput::class),
 
-								Scheme::prop('in', [
+								property('in', [
 									'hour',
 									'day',
 									'week',
@@ -275,7 +291,7 @@ final class SimpleTestCase
 							)
 						)),
 
-					Scheme::prop('rounds', new class(CustomInput::class) extends UserValueProvider implements ManyValuesProvider {
+					property('rounds', new class(CustomInput::class) extends UserValueProvider implements ManyValuesProvider {
 
 						public function getValues(): array
 						{
@@ -293,11 +309,11 @@ final class SimpleTestCase
 						}
 					}),
 
-					Scheme::prop('interval',
+					property('interval',
 
-						Scheme::prop('first', DrawStartDateValidator::class),
+						property('first', DrawStartDateValidator::class),
 
-						Scheme::prop('repeatEvery', [
+						property('repeatEvery', [
 							'hour',
 							'day',
 							'week',
@@ -311,18 +327,18 @@ final class SimpleTestCase
 
 	private static function buildSchemeTwo(): Node
 	{
-		return Scheme::bag(
+		return bag(
 
 			// just for purposes of this test
-			Scheme::prop('schemeId', 'two'),
+			property('schemeId', 'two'),
 
-			Scheme::prop('competition',
+			property('competition',
 
-				Scheme::candidates('steps',
+				candidates('steps',
 
-					Scheme::bag(
+					bag(
 
-						Scheme::prop('type', [
+						property('type', [
 							'buyGoods',
 							'uploadPhoto',
 							'typeText',
@@ -331,44 +347,44 @@ final class SimpleTestCase
 						])
 							->uniqueKey()
 
-							->on('buyGoods', Scheme::group(
+							->on('buyGoods', group(
 
-								Scheme::prop('specs',
-									Scheme::prop('buy', [
+								property('specs',
+									property('buy', [
 										'atLeastOne',
 										'all',
 									])
 								),
-								Scheme::prop('title', TextualInput::class),
-								Scheme::prop('prompt')
+								property('title', TextualInput::class),
+								property('prompt')
 							))
 
-							->on('uploadPhoto', Scheme::group(
+							->on('uploadPhoto', group(
 
-								Scheme::prop('title', TextualInput::class),
-								Scheme::prop('titleAfter', TextualInput::class),
-								Scheme::prop('prompt')
+								property('title', TextualInput::class),
+								property('titleAfter', TextualInput::class),
+								property('prompt')
 							))
 
-							->on('typeText', Scheme::group(
+							->on('typeText', group(
 
-								Scheme::prop('title', TextualInput::class),
-								Scheme::prop('titleAfter', TextualInput::class),
-								Scheme::prop('prompt',
-									Scheme::prop('type', 'text'),
-									Scheme::prop('maxLength', NumericInput::class)
+								property('title', TextualInput::class),
+								property('titleAfter', TextualInput::class),
+								property('prompt',
+									property('type', 'text'),
+									property('maxLength', NumericInput::class)
 								)
 							))
 
-							->on('pickOne', Scheme::group(
+							->on('pickOne', group(
 
-								Scheme::prop('title', TextualInput::class),
-								Scheme::prop('titleAfter',
-									Scheme::prop('onCorrect', TextualInput::class),
-									Scheme::prop('onWrong', TextualInput::class)
+								property('title', TextualInput::class),
+								property('titleAfter',
+									property('onCorrect', TextualInput::class),
+									property('onWrong', TextualInput::class)
 								),
-								Scheme::prop('prompt',
-									Scheme::prop('type', 'options'),
+								property('prompt',
+									property('type', 'options'),
 									Scheme::options('options', [
 										'a' => 'Řím', 'b' => 'New York', 'c' => 'Lima',
 									])

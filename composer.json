@@ -16,7 +16,10 @@
 		"psr-4": {
 			"Schemer\\": "src/Schemer",
 			"Schemer\\Bridges\\": "src/Bridges"
-		}
+		},
+		"files": [
+			"src/Schemer/functions.php"
+		]
 	},
 	"autoload-dev": {
 		"psr-4": {
