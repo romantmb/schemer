@@ -41,6 +41,17 @@ namespace Schemer
 
 
 	/**
+	 * @param string $name
+	 * @param mixed  ...$content
+	 * @return Options
+	 */
+	function options(string $name, ...$content): Options
+	{
+		return Scheme::options($name, ...$content);
+	}
+
+
+	/**
 	 * @param mixed ...$content
 	 * @return Group
 	 */
