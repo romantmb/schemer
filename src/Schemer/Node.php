@@ -316,11 +316,12 @@ class Node implements Arrayable, Jsonable
 
 	/**
 	 * @param string|array $data
+	 * @param bool         $ignoreNonExistingNodes
 	 * @return Node
 	 */
-	public function initialize($data): Node
+	public function initialize($data, bool $ignoreNonExistingNodes = false): Node
 	{
-		$this->fillNodeWithData($data);
+		$this->fillNodeWithData($data, null, $ignoreNonExistingNodes);
 
 		return $this;
 	}
@@ -334,9 +335,7 @@ class Node implements Arrayable, Jsonable
 	 */
 	public function tryInitialize($data): Node
 	{
-		$this->fillNodeWithData($data, null, true);
-
-		return $this;
+		return $this->initialize($data, true);
 	}
 
 
@@ -483,11 +482,8 @@ class Node implements Arrayable, Jsonable
 			if ($item instanceof Property && ! $item->isBag()) {
 				$item->setValue($content);
 
-			} elseif ($ignoreNonExistingNodes === true) {
-				$item->tryInitialize($content);
-
 			} else {
-				$item->initialize($content);
+				$item->initialize($content, $ignoreNonExistingNodes);
 			}
 		}
 	}

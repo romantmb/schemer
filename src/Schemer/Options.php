@@ -193,9 +193,9 @@ final class Options extends Node implements NamedNode
 	public function getUniqueKeyProperty(): ?Property
 	{
 		return ! $this->containsPrimitives()
-			&& ($candidate = $this->getCandidates()->first()) && $candidate instanceof ValueProvider
-			&& ($property = $candidate->getProperty()) && $property instanceof Property
-			&& $property->isUniqueKey()
+		&& ($candidate = $this->getCandidates()->first()) && $candidate instanceof ValueProvider
+		&& ($property = $candidate->getProperty()) && $property instanceof Property
+		&& $property->isUniqueKey()
 			? $property : null;
 	}
 
@@ -292,9 +292,10 @@ final class Options extends Node implements NamedNode
 
 	/**
 	 * @param array|string $data
+	 * @param bool         $ignoreNonExistingNodes
 	 * @return Node
 	 */
-	public function initialize($data): Node
+	public function initialize($data, bool $ignoreNonExistingNodes = false): Node
 	{
 		if ($this->containsPrimitives()) {
 
@@ -309,7 +310,7 @@ final class Options extends Node implements NamedNode
 
 		$candidates = $this->getCandidates();
 
-		foreach ($data as $i => $properties) {
+		foreach ($data as $properties) {
 
 			/**
 			 * @var ValueProvider $valueProvider
@@ -346,7 +347,7 @@ final class Options extends Node implements NamedNode
 				throw new UndeterminedPropertyException('No specific option candidate picked up. (ToDo: This issue has to be made up. )');
 			}
 
-			$this->fillNodeWithData($properties->all(), $option);
+			$this->fillNodeWithData($properties->all(), $option, $ignoreNonExistingNodes);
 		}
 
 		return $this;
