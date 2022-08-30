@@ -37,7 +37,7 @@ final class FormsForSchemer
 	];
 
 	/** @var string */
-	private $slugTransformerClass;
+	private string $slugTransformerClass;
 
 	/** @var callable */
 	private $_filter;
@@ -79,17 +79,13 @@ final class FormsForSchemer
 
 
 	/**
-	 * @param string $slug
-	 * @return string
 	 * @throws SchemerException
 	 */
 	public function makeSlugHumanReadable(string $slug): string
 	{
-		if (class_exists($this->slugTransformerClass)) {
-			return call_user_func([ $this->slugTransformerClass, 'transform' ], $slug);
-		}
-
-		return $slug;
+		return isset($this->slugTransformerClass) && class_exists($this->slugTransformerClass)
+			? call_user_func([ $this->slugTransformerClass, 'transform' ], $slug)
+			: $slug;
 	}
 
 

@@ -50,6 +50,6 @@ final class Bootstrap
 
 	private static function path(string $relativePath): string
 	{
-		return dirname(__DIR__) . '/' . ltrim($relativePath, '/');
+		return __DIR__ . '/' . ltrim($relativePath, '/');
 	}
 }

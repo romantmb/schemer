@@ -291,7 +291,7 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	public function initialize(string|array $data, bool $ignoreNonExistingNodes = false): Node
+	public function initialize(string|array|stdClass $data, bool $ignoreNonExistingNodes = false): Node
 	{
 		$this->fillNodeWithData($data, null, $ignoreNonExistingNodes);
 
@@ -302,7 +302,7 @@ class Node implements Arrayable, Jsonable
 	/**
 	 * Error-tolerant alternative to initialize()
 	 */
-	public function tryInitialize(string|array $data): Node
+	public function tryInitialize(string|array|stdClass $data): Node
 	{
 		return $this->initialize($data, ignoreNonExistingNodes: true);
 	}
