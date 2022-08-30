@@ -26,40 +26,32 @@ use stdClass;
 
 class Node implements Arrayable, Jsonable
 {
-	/** @var Node */
-	protected $parent;
-
 	/** @var Node[] */
-	protected $children = [];
+	protected array $children = [];
 
-	/** @var string */
-	protected $key;
+	protected ?string $key = null;
 
 
-	/**
-	 * @param Node|null $parent
-	 */
-	public function __construct(Node $parent = null)
+	public function __construct(protected ?Node $parent = null)
 	{
-		$this->parent = $parent;
 	}
 
 
 	/**
-	 * @param Node $child
-	 * @return Node
 	 * @throws ExistingPropertyNameException
 	 * @throws InvalidNodeException
 	 */
 	public function add(Node $child): Node
 	{
 		if (! $child instanceof NamedNode) {
-			$mismatch = is_object($child) ? ('instance of ' . get_class($child)) : strtolower(gettype($child));
-			throw new InvalidNodeException(sprintf('Scheme node must implement NamedNode (e.g. Property or Options), %s given', $mismatch));
+			throw new InvalidNodeException(sprintf(
+				'Scheme node must implement NamedNode (e.g. Property or Options), instance of %s given',
+				$child::class));
 		}
 
 		if (array_key_exists($child->getName(), $this->children)) {
-			throw new ExistingPropertyNameException(sprintf("Property '%s' already exists in this node.", $child->getName()));
+			throw new ExistingPropertyNameException(sprintf(
+				"Property '%s' already exists in this node.", $child->getName()));
 		}
 
 		$child->beforeAdded($this);
@@ -68,29 +60,18 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param Node $parent
-	 */
 	public function beforeAdded(Node $parent): void
 	{
 	}
 
 
-	/**
-	 * @param  Node $parent
-	 * @return Node
-	 */
 	public function setParent(Node $parent): Node
 	{
 		$this->parent = $parent;
-
 		return $this;
 	}
 
 
-	/**
-	 * @return Node|null
-	 */
 	public function getParent(): ?Node
 	{
 		return $this->parent;
@@ -98,11 +79,9 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * @param bool $omitUndeterminedNodes
-	 * @return array
 	 * @throws UndeterminedPropertyException
 	 */
-	public function getChildren($omitUndeterminedNodes = true): array
+	public function getChildren(bool $omitUndeterminedNodes = true): array
 	{
 		$children = [];
 
@@ -128,10 +107,6 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param string $name
-	 * @return NamedNode|null
-	 */
 	public function getChild(string $name): ?NamedNode
 	{
 		foreach ($this->getChildren() as $child) {
@@ -144,12 +119,7 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param string $path
-	 * @param bool   $setValues
-	 * @return Node|ArrayItem|null
-	 */
-	public function find(string $path, $setValues = false)
+	public function find(string $path, bool $setValues = false): Node|ArrayItem|null
 	{
 		$child = collect(explode('.', $path))->shift();
 		if ($child) {
@@ -157,13 +127,13 @@ class Node implements Arrayable, Jsonable
 		}
 
 		$pick = null;
-		$child = Strings::replace($child, '/\[[^=]+(=[^]]*)?\].*/', function($matches) use (& $pick) {
+		$child = Strings::replace($child, '/\[[^=]+(=[^]]*)?\].*/', static function($matches) use (& $pick) {
 			$pick = trim($matches[0], '[]');
 			return '';
 		});
 
 		$value = null;
-		if (strpos($child, '=') !== false) {
+		if (str_contains($child, '=')) {
 			[ $child, $value ] = explode('=', $child) + [ null, null ];
 		}
 
@@ -172,7 +142,7 @@ class Node implements Arrayable, Jsonable
 			$current = $this->getChild($child);
 			if ($current === null) {
 				if ($pick) {
-					if (strpos($pick, '=') !== false) {
+					if (str_contains($pick, '=')) {
 						throw new ItemNotFoundException(sprintf("Item '%s.%s[%s]' not found.", $this->getPath(), $child, $pick));
 					}
 					throw new ItemNotFoundException(sprintf("Item '%s.%s[%s]' not found. Did you mean '%s[%s=%s]'?", $this->getPath(), $child, $pick, $this->getPath(), $child, $pick));
@@ -206,13 +176,9 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * Strict form of find()
-	 *
-	 * @param string $path
-	 * @param bool   $setValues
-	 * @return Node|ArrayItem
+	 * Strict alternative to find()
 	 */
-	public function get(string $path, $setValues = false)
+	public function get(string $path, bool $setValues = false): Node|ArrayItem
 	{
 		if ($item = $this->find($path, $setValues)) {
 			return $item;
@@ -225,14 +191,9 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param string $path
-	 * @param mixed  $value
-	 * @return static
-	 */
-	public function set(string $path, $value): self
+	public function set(string $path, mixed $value): static
 	{
-		$item = $this->get($path, true);
+		$item = $this->get($path, setValues: true);
 
 		if ($item instanceof Property && $item->isUniqueKey() && ($options = $item->isInOptions())) {
 			$lookFor = sprintf(
@@ -262,43 +223,31 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param string $path
-	 * @return Node|null
-	 */
 	public function tryFind(string $path): ?Node
 	{
 		try {
 			return $this->find($path);
 
-		} catch (ItemNotFoundException $e) {
+		} catch (ItemNotFoundException) {
 			return null;
 		}
 	}
 
 
 	/**
-	 * Error-tolerant alternative of set()
-	 *
-	 * @param string $path
-	 * @param mixed  $value
-	 * @return Node
+	 * Error-tolerant alternative to set()
 	 */
-	public function trySet(string $path, $value): Node
+	public function trySet(string $path, mixed $value): Node
 	{
 		try {
 			$this->set($path, $value);
 
-		} catch (ItemNotFoundException $e) {}
+		} catch (ItemNotFoundException) {}
 
 		return $this;
 	}
 
 
-	/**
-	 * @param string $path
-	 * @return Node
-	 */
 	public function unset(string $path): Node
 	{
 		$item = $this->get($path);
@@ -314,12 +263,7 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param string|array $data
-	 * @param bool         $ignoreNonExistingNodes
-	 * @return Node
-	 */
-	public function initialize($data, bool $ignoreNonExistingNodes = false): Node
+	public function initialize(string|array $data, bool $ignoreNonExistingNodes = false): Node
 	{
 		$this->fillNodeWithData($data, null, $ignoreNonExistingNodes);
 
@@ -328,76 +272,47 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * Error-tolerant alternative of initialize()
-	 *
-	 * @param string|array $data
-	 * @return Node
+	 * Error-tolerant alternative to initialize()
 	 */
-	public function tryInitialize($data): Node
+	public function tryInitialize(string|array $data): Node
 	{
-		return $this->initialize($data, true);
+		return $this->initialize($data, ignoreNonExistingNodes: true);
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getPath(): string
 	{
-		return
-			($left =
-				($this->getParent() ? $this->getParent()->getPath() : '')
-				. ($this->getKey() ? sprintf('[%s]', $this->getKey()) : '')
-			)
-			. ($this instanceof NamedNode ? sprintf('%s%s', ($left ? '.' : ''), $this->getName()) : '');
+		$parts = [
+			$this->getParent()?->getPath() . $this->keyBadge(),
+			$this instanceof NamedNode ? $this->getName() : null,
+		];
+
+		return implode('.', array_filter($parts));
 	}
 
 
-	/**
-	 * @param string|null $key
-	 * @return Node
-	 */
-	public function setKey(string $key = null): Node
+	public function setKey(?string $key = null): Node
 	{
-		if ($key !== null) {
-			$this->key = $key;
-		}
-
+		$this->key = $key ?: null;
 		return $this;
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getKey(): ?string
 	{
-		return $this->key;
+		return $this->key ?? null;
 	}
 
 
 	/**
 	 * Tries to find a key of any parent
-	 *
-	 * @return string|null
 	 */
 	public function getAnyKey(): ?string
 	{
-		if ($this->getKey()) {
-			return $this->getKey();
-		}
-
-		if (! $this->getParent()) {
-			return null;
-		}
-
-		return $this->getParent()->getAnyKey();
+		return $this->getKey() ?? $this->getParent()?->getAnyKey();
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getHash(): string
 	{
 		return substr(md5(spl_object_hash($this)), 0, 4);
@@ -405,7 +320,6 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * @return array
 	 * @throws UndeterminedPropertyException
 	 */
 	public function toArray(): array
@@ -415,8 +329,6 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * @param int $options
-	 * @return string
 	 * @throws UndeterminedPropertyException
 	 */
 	public function toJson($options = 0): string
@@ -425,10 +337,6 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param Node|null $node
-	 * @return Node
-	 */
 	protected function updateParentalLinks(Node $node = null): Node
 	{
 		$node = $node ?: $this;
@@ -444,14 +352,9 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param mixed     $data
-	 * @param Node|null $node
-	 * @param bool      $ignoreNonExistingNodes
-	 */
-	protected function fillNodeWithData($data, Node $node = null, bool $ignoreNonExistingNodes = false): void
+	protected function fillNodeWithData(mixed $data, Node $node = null, bool $ignoreNonExistingNodes = false): void
 	{
-		$node = $node ?: $this;
+		$node ??= $this;
 
 		if (is_string($data) && $node->getParent() === null) {
 			try {
@@ -490,12 +393,11 @@ class Node implements Arrayable, Jsonable
 
 
 	/**
-	 * @return Collection
 	 * @throws UndeterminedPropertyException
 	 */
 	protected function collection(): Collection
 	{
-		return collect($this->getChildren(false))
+		return collect($this->getChildren(omitUndeterminedNodes: false))
 			->mapWithKeys(static function(Node $node) {
 				if ($node instanceof NamedNode) {
 					return [
@@ -508,12 +410,13 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	/**
-	 * @param string|null $name
-	 * @param mixed|null  $value
-	 * @return mixed
-	 */
-	private static function stripPropertyNameInValue(string $name = null, $value = null)
+	protected function keyBadge(): string
+	{
+		return $this->key ? "[$this->key]" : '';
+	}
+
+
+	private static function stripPropertyNameInValue(?string $name = null, mixed $value = null): mixed
 	{
 		if (is_array($value)) {
 			return collect($value)
@@ -523,7 +426,7 @@ class Node implements Arrayable, Jsonable
 				->all();
 		}
 
-		return is_string($value) && strpos($value, "$name=") === 0
+		return is_string($value) && str_starts_with($value, "$name=")
 			? substr($value, strlen("$name="))
 			: $value;
 	}

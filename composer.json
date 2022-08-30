@@ -27,15 +27,17 @@
 		}
 	},
 	"require": {
-		"php": "^7.2|^8.0",
-		"illuminate/support": "^5.5 | ^8.0",
+		"php": "^8.0",
+		"illuminate/support": "^8.0",
 		"league/fractal": "^0.19",
-		"nette/utils": "^2.4 || ^3.0",
+		"nette/utils": "^3.0",
 		"tuupola/base58": "^2.0"
 	},
 	"require-dev": {
 		"symfony/var-dumper": "^4.3",
-		"tracy/tracy": "^2.6",
-		"nette/forms": "^2.4"
+		"tracy/tracy": "^2.9",
+		"nette/forms": "^3.0",
+		"nette/tester": "^2.4",
+		"nette/bootstrap": "^3.1"
 	}
 }

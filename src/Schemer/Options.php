@@ -110,31 +110,19 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param mixed      $item
-	 * @param mixed|null $key
-	 * @return Options
-	 */
 	public function addCandidate($item, $key = null): Options
 	{
 		return $this->addItem($this->candidates, $item, $key);
 	}
 
 
-	/**
-	 * @return array
-	 */
 	public function getItems(): array
 	{
 		return $this->items;
 	}
 
 
-	/**
-	 * @param bool $sortByPriority
-	 * @return Collection
-	 */
-	public function getCandidates($sortByPriority = true): Collection
+	public function getCandidates(bool $sortByPriority = true): Collection
 	{
 		if (empty($this->candidates)) {
 			return collect();
