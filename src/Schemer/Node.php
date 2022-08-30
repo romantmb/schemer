@@ -3,6 +3,8 @@
 /**
  * Schemer
  * @author Roman Pistek
+ *
+ * @noinspection PhpDocSignatureInspection
  */
 
 declare(strict_types=1);
@@ -121,7 +123,14 @@ class Node implements Arrayable, Jsonable
 	}
 
 
-	public function find(string $path, bool $setValues = false): Node|ArrayItem|null
+	/**
+	 * @template T
+	 * @param string $path
+	 * @param class-string<T>|null $class
+	 * @param bool $setValues
+	 * @return T
+	 */
+	public function find(string $path, string $class = null, bool $setValues = false): Node|ArrayItem|null
 	{
 		$child = collect(explode('.', $path))->shift();
 		if ($child) {
@@ -173,16 +182,33 @@ class Node implements Arrayable, Jsonable
 			return null;
 		}
 
-		return $path ? $current->find($path, $setValues) : $current;
+		if ($path) {
+			return $current->find($path, class: $class, setValues: $setValues);
+		}
+
+		if ($class !== null && $class !== $current::class) {
+			throw new InvalidNodeException(sprintf(
+				"Item '%s' (%s) does not match required class %s.",
+				$current->getName(), $current::class, $class
+			));
+		}
+
+		return $current;
 	}
 
 
 	/**
 	 * Strict alternative to find()
+	 *
+	 * @template T
+	 * @param string $path
+	 * @param class-string<T>|null $class
+	 * @param bool $setValues
+	 * @return T
 	 */
-	public function get(string $path, bool $setValues = false): Node|ArrayItem
+	public function get(string $path, string $class = null, bool $setValues = false): Node|ArrayItem
 	{
-		if ($item = $this->find($path, $setValues)) {
+		if ($item = $this->find($path, $class, $setValues)) {
 			return $item;
 		}
 
