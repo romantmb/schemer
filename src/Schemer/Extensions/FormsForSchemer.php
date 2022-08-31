@@ -25,6 +25,9 @@ use InvalidArgumentException;
 use Exception;
 
 
+/**
+ * @deprecated
+ */
 final class FormsForSchemer
 {
 	/** @var CollectionOfSchemeInputs */

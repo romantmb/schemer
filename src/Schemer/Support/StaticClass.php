@@ -12,6 +12,9 @@ namespace Schemer\Support;
 use Schemer\Exceptions\StaticClassException;
 
 
+/**
+ * @deprecated
+ */
 abstract class StaticClass
 {
 	public function __construct()

@@ -9,34 +9,42 @@ declare(strict_types=1);
 
 namespace Schemer\Bridges\SchemerNetteForms;
 
-use Schemer\Extensions\FormExtender;
-use Schemer\Extensions\FormInputSpecification;
+use Schemer\Extensions\Forms\FormExtender as Extender;
+use Schemer\Extensions\Forms\InputSpecification;
 use Nette\Forms\Form;
 use Nette\Forms\Controls\BaseControl;
+use InvalidArgumentException;
 
 
-/**
- * @deprecated
- */
-final class NetteFormExtender implements FormExtender
+final class FormExtender implements Extender
 {
-	/** @var Form */
-	private $form;
+	private Form $form;
 
 
-	/**
-	 * @param Form $form
-	 */
-	public function __construct(Form $form)
+	public function extend($form): FormExtender
 	{
+		if (! $form instanceof Form) {
+			throw new InvalidArgumentException(sprintf('Argument must be an instance of %s.', Form::class));
+		}
+
 		$this->form = $form;
+		return $this;
 	}
 
 
-	/**
-	 * @param FormInputSpecification $spec
-	 */
-	public function addSelect(FormInputSpecification $spec): void
+	public function getForm(): Form
+	{
+		return $this->form;
+	}
+
+
+	public function render(...$args): void
+	{
+		$this->form->render(...$args);
+	}
+
+
+	public function addSelect(InputSpecification $spec): FormExtender
 	{
 		$spec->setFormControl(
 			$this->form->addSelect($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
@@ -46,13 +54,12 @@ final class NetteFormExtender implements FormExtender
 				->setDefaultValue($spec->getValue())
 				->setHtmlAttribute('data-has-conditional-siblings', $spec->hasAnyConditionalSiblings())
 		);
+
+		return $this;
 	}
 
 
-	/**
-	 * @param FormInputSpecification $spec
-	 */
-	public function addCheckboxList(FormInputSpecification $spec): void
+	public function addCheckboxList(InputSpecification $spec): FormExtender
 	{
 		$spec->setFormControl(
 			$this->form->addCheckboxList($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
@@ -60,13 +67,12 @@ final class NetteFormExtender implements FormExtender
 				->setDisabled($spec->isDisabled())
 				->setDefaultValue($spec->getValue())
 		);
+
+		return $this;
 	}
 
 
-	/**
-	 * @param FormInputSpecification $spec
-	 */
-	public function addSwitch(FormInputSpecification $spec): void
+	public function addSwitch(InputSpecification $spec): FormExtender
 	{
 		$spec->setFormControl(
 			$this->form->addCheckbox($spec->getInputName(), $spec->getLabel())
@@ -75,13 +81,12 @@ final class NetteFormExtender implements FormExtender
 				->setDefaultValue($spec->getValue())
 				->setHtmlAttribute('data-has-conditional-siblings', $spec->hasAnyConditionalSiblings())
 		);
+
+		return $this;
 	}
 
 
-	/**
-	 * @param FormInputSpecification $spec
-	 */
-	public function addText(FormInputSpecification $spec): void
+	public function addText(InputSpecification $spec): FormExtender
 	{
 		$spec->setFormControl(
 			$this->form->addText($spec->getInputName(), $spec->getLabel())
@@ -89,45 +94,49 @@ final class NetteFormExtender implements FormExtender
 				->setDisabled($spec->isDisabled())
 				->setDefaultValue($spec->getValue())
 		);
+
+		return $this;
 	}
 
 
-	/**
-	 * @param FormInputSpecification $spec
-	 */
-	public function addHidden(FormInputSpecification $spec): void
+	public function addTextArea(InputSpecification $spec): FormExtender
+	{
+		$spec->setFormControl(
+			$this->form->addTextArea($spec->getInputName(), $spec->getLabel())
+				->setRequired($spec->isRequired())
+				->setDisabled($spec->isDisabled())
+				->setDefaultValue($spec->getValue())
+		);
+
+		return $this;
+	}
+
+
+	public function addHidden(InputSpecification $spec): FormExtender
 	{
 		$spec->setFormControl(
 			$this->form->addHidden($spec->getInputName())
 				->setDefaultValue($spec->getValue())
 		);
+
+		return $this;
 	}
 
 
-	/**
-	 * @param string      $message
-	 * @param string|null $inputName
-	 */
-	public function addError(string $message, string $inputName = null)
+	public function addError(string $message, string $inputName = null): FormExtender
 	{
-		if ($inputName !== null) {
-			$this->getControl($inputName)->addError($message);
+		($inputName !== null ? $this->getControl($inputName) : $this->form)
+			->addError($message);
 
-		} else {
-			$this->form->addError($message);
-		}
+		return $this;
 	}
 
 
 	/**
-	 * @param string $name
-	 * @return BaseControl
+	 * @noinspection PhpIncompatibleReturnTypeInspection
 	 */
 	private function getControl(string $name): BaseControl
 	{
-		/** @var BaseControl $control */
-		$control = $this->form->getComponent($name, BaseControl::class);
-
-		return $control;
+		return $this->form->getComponent($name);
 	}
 }

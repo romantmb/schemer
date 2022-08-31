@@ -9,24 +9,32 @@ declare(strict_types=1);
 
 namespace Schemer\Extensions\Transformers;
 
-use Schemer\Support\StaticClass;
 use Nette\Utils\Strings;
 use Tuupola\Base58;
 
 
-class InputNameToSchemePathTransformer extends StaticClass
+class InputNameToSchemePathTransformer
 {
 
-	/**
-	 * @param string|null $name
-	 * @return string|null
-	 */
-	public static function transform(string $name = null): ?string
-	{
-		if (! $name || strpos($name, SchemePathToInputNameTransformer::INPUT_PREFIX) !== 0) {
-			return null;
-		}
+	private function __construct() {}
 
-		return (new Base58)->decode(Strings::replace($name, sprintf('/^%s/', SchemePathToInputNameTransformer::INPUT_PREFIX)));
+
+	public static function transform(?string $name = null): ?string
+	{
+		return str_starts_with($name, self::prefix())
+			? (new Base58)->decode(self::strip($name))
+			: null;
+	}
+
+
+	private static function prefix(): string
+	{
+		return SchemePathToInputNameTransformer::prefix();
+	}
+
+
+	private static function strip(string $name): string
+	{
+		return Strings::replace($name, sprintf('/^%s/', self::prefix()));
 	}
 }

@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Schemer\Extensions;
+namespace Schemer\Extensions\Forms;
 
 use Schemer\Property;
 use Schemer\Options;
@@ -21,109 +21,60 @@ use Schemer\Exceptions\InvalidNodeException;
 use Schemer\Exceptions\InvalidValueException;
 
 
-/**
- * @deprecated
- */
-class FormInputSpecification
+class InputSpecification
 {
-	/** @var FormsForSchemer */
-	private $service;
+	private string $type;
 
-	/** @var Property */
-	private $property;
+	private bool $required;
 
-	/** @var string */
-	private $type;
+	private bool $disabled = false;
 
-	/** @var bool */
-	private $required;
+	private bool $hidden = false;
 
-	/** @var bool */
-	private $disabled = false;
+	private array $options;
 
-	/** @var bool */
-	private $hidden = false;
+	private Property $propertyWithUniqueKey;
 
-	/** @var array */
-	private $options;
+	private object $formControl;
 
-	/** @var Property */
-	private $propertyWithUniqueKey;
-
-	/** @var object */
-	private $formControl;
-
-	/** @var bool */
-	private $valueProviderRefreshed = false;
+	private bool $valueProviderRefreshed = false;
 
 
-	/**
-	 * @param Property        $property
-	 * @param FormsForSchemer $service
-	 * @throws InvalidNodeException
-	 */
-	public function __construct(Property $property, FormsForSchemer $service)
+	public function __construct(private Property $property, private SchemeForm $form)
 	{
-		$this->property = $property;
-
-		$this->service = $service;
-
-		if (is_array($userValueProvider = $property->getValueProvider()) || ! empty($property->getOptionalValues())) {
-
-			if ($userValueProvider instanceof ManyValuesProvider && $userValueProvider->multipleValues()) {
-				$this->type = 'multiselect';
-
-			} else {
-				$this->type = 'select';
-			}
-
-		} elseif (($userValueProvider = $property->getValueProvider()) && $userValueProvider instanceof UserValueProvider) {
-
-			if (is_a($userValueProvider->getValidatorClass(), NullableBooleanInput::class, true)) {
-				$this->type = 'switch';
-
-			} else {
-				$this->type = 'text';
-			}
-
-		} else {
-			$valueProvider = $property->getValueProvider();
-			$invalid = is_object($valueProvider) ? sprintf('instance of %s', get_class($valueProvider)) : gettype($valueProvider);
-			throw new InvalidNodeException(sprintf('Array with options or an UserValueProvider expected, %s given.', $invalid));
-		}
+		$this->type = match (true) {
+			is_array($userValueProvider = $property->getValueProvider()) || ! empty($property->getOptionalValues()) =>
+				$userValueProvider instanceof ManyValuesProvider && $userValueProvider->multipleValues()
+					? 'multiselect'
+					: 'select',
+			($userValueProvider = $property->getValueProvider()) && $userValueProvider instanceof UserValueProvider =>
+				is_a($userValueProvider->getValidatorClass(), NullableBooleanInput::class, true)
+					? 'switch'
+					: 'text',
+			default => throw new InvalidNodeException(sprintf(
+				'Array with options or an UserValueProvider expected, %s given.', var_export($property->getValueProvider(), true)))
+		};
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isSelect(): bool
 	{
 		return $this->type === 'select';
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isMultiSelect(): bool
 	{
 		return $this->type === 'multiselect';
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isSwitch(): bool
 	{
 		return $this->type === 'switch';
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isRequired(): bool
 	{
 		if ($this->required !== null) {
@@ -143,7 +94,7 @@ class FormInputSpecification
 				(clone $this->property->getValueProvider())->setValue(null);
 				return $this->required = false;
 
-			} catch (InvalidValueException $e) {
+			} catch (InvalidValueException) {
 				return $this->required = true;
 			}
 		}
@@ -152,114 +103,75 @@ class FormInputSpecification
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isDisabled(): bool
 	{
 		return $this->disabled;
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isHidden(): bool
 	{
 		return $this->hidden;
 	}
 
 
-	/**
-	 * @return static
-	 */
-	public function setAsRequired(): FormInputSpecification
+	public function setAsRequired(): InputSpecification
 	{
 		$this->required = true;
-
 		return $this;
 	}
 
 
-	/**
-	 * @return FormInputSpecification
-	 */
-	public function setAsDisabled(): FormInputSpecification
+	public function setAsDisabled(): InputSpecification
 	{
 		$this->disabled = true;
-
 		return $this;
 	}
 
 
-	/**
-	 * @return FormInputSpecification
-	 */
-	public function setAsHidden(): FormInputSpecification
+	public function setAsHidden(): InputSpecification
 	{
 		$this->hidden = true;
-
 		return $this;
 	}
 
 
-	/**
-	 * @param object|null $control
-	 */
 	public function setFormControl(object $control = null): void
 	{
 		$this->formControl = $control;
 	}
 
 
-	/**
-	 * @return object
-	 */
 	public function getFormControl(): object
 	{
 		return $this->formControl;
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getPath(): string
 	{
 		return $this->property->getPath();
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getInputName(): string
 	{
 		return SchemePathToInputNameTransformer::transform($this->getPath());
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getName(): string
 	{
 		return $this->property->getName();
 	}
 
 
-	/**
-	 * @return string|null
-	 */
 	public function getGroup(): ?string
 	{
 		return $this->property->getAnyKey();
 	}
 
 
-	/**
-	 * @return string|null
-	 */
 	public function getGroupHash(): ?string
 	{
 		return ($group = $this->getGroup()) ? substr(md5($group), 0, 10) : null;
@@ -267,31 +179,20 @@ class FormInputSpecification
 
 
 	/**
-	 * @return string
 	 * @throws SchemerException
 	 */
 	public function getLabel(): string
 	{
-		return $this->service->makeSlugHumanReadable($this->getName());
+		return $this->form->humanReadableSlug($this->getName());
 	}
 
 
-	/**
-	 * @return array
-	 */
 	public function getOptions(): array
 	{
-		if ($this->options === null) {
-			$this->options = $this->initializeOptions();
-		}
-
-		return $this->options;
+		return $this->options ??= $this->initializeOptions();
 	}
 
 
-	/**
-	 * @return mixed|null
-	 */
 	public function getValue()
 	{
 		$this->refreshPropertyInValueProvider();
@@ -332,13 +233,10 @@ class FormInputSpecification
 			$value = implode(',', $value);
 		}
 
-		return $this->service->makeSlugHumanReadable(sprintf('%s:%s', $this->getName(), $value));
+		return $this->form->humanReadableSlug(sprintf('%s:%s', $this->getName(), $value));
 	}
 
 
-	/**
-	 * @return string|null
-	 */
 	public function getValidatorClass(): ?string
 	{
 		return ($provider = $this->property->getValueProvider()) && $provider instanceof UserValueProvider
@@ -347,29 +245,19 @@ class FormInputSpecification
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function hasUniqueKey(): bool
 	{
 		return $this->property->isUniqueKey();
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function hasAnyConditionalSiblings(): bool
 	{
 		return $this->property->hasAnyConditionalSiblings();
 	}
 
 
-	/**
-	 * @param Property|null $property
-	 * @return FormInputSpecification
-	 */
-	public function setPropertyWithUniqueKey(Property $property = null): FormInputSpecification
+	public function setPropertyWithUniqueKey(Property $property = null): InputSpecification
 	{
 		if ($property !== null && $property !== $this->property && $property->isUniqueKey()) {
 			$this->propertyWithUniqueKey = $property;
@@ -379,28 +267,18 @@ class FormInputSpecification
 	}
 
 
-	/**
-	 * @return Property|null
-	 */
 	public function getPropertyWithUniqueKey(): ?Property
 	{
 		return $this->propertyWithUniqueKey;
 	}
 
 
-	/**
-	 * @return Property
-	 */
 	public function getProperty(): Property
 	{
 		return $this->property;
 	}
 
 
-	/**
-	 * @return array
-	 * @throws SchemerException
-	 */
 	public function export(): array
 	{
 		return [
@@ -422,9 +300,6 @@ class FormInputSpecification
 	}
 
 
-	/**
-	 * @return array
-	 */
 	private function initializeOptions(): array
 	{
 		if ($this->isSelect() || $this->isMultiSelect()) {
@@ -442,7 +317,7 @@ class FormInputSpecification
 						? sprintf('%s=%s', $this->getName(), $v)
 						: $v;
 
-					$title = $this->service->makeSlugHumanReadable(sprintf('%s:%s', $this->getName(), $value));
+					$title = $this->form->humanReadableSlug(sprintf('%s:%s', $this->getName(), $value));
 
 					return [ $key => $title ];
 				})

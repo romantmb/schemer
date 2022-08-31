@@ -12,6 +12,9 @@ namespace Schemer\Exceptions;
 use LogicException;
 
 
+/**
+ * @deprecated
+ */
 class StaticClassException extends LogicException
 {
 }

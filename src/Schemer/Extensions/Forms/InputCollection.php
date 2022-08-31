@@ -9,33 +9,23 @@ declare(strict_types=1);
 
 namespace Schemer\Extensions;
 
-use Illuminate\Support\Collection;
+use Schemer\Extensions\Forms\InputSpecification;
 use Schemer\Exceptions\SchemerException;
+use Illuminate\Support\Collection;
 
 
-/**
- * @deprecated
- */
-class CollectionOfSchemeInputs extends Collection
+final class InputCollection extends Collection
 {
 
-	/**
-	 * @param mixed $inputs
-	 */
-	public function __construct($inputs = null)
+	public function __construct(mixed $inputs = null)
 	{
 		parent::__construct($inputs);
 	}
 
 
-	/**
-	 * @param string      $name
-	 * @param string|null $groupHash
-	 * @return FormInputSpecification|null
-	 */
-	public function getByName(string $name, string $groupHash = null): ?FormInputSpecification
+	public function getByName(string $name, string $groupHash = null): ?InputSpecification
 	{
-		$found = $this->filterBy(function(FormInputSpecification $spec) use ($name) {
+		$found = $this->filterBy(function(InputSpecification $spec) use ($name) {
 			return $spec->getName() === $name;
 		}, $groupHash);
 
@@ -47,11 +37,7 @@ class CollectionOfSchemeInputs extends Collection
 	}
 
 
-	/**
-	 * @param string $path
-	 * @return FormInputSpecification|null
-	 */
-	public function getByPath(string $path): ?FormInputSpecification
+	public function getByPath(string $path): ?InputSpecification
 	{
 		$items = $this;
 
@@ -59,28 +45,20 @@ class CollectionOfSchemeInputs extends Collection
 			$items = $this->flatten();
 		}
 
-		return $items->filterBy(function(FormInputSpecification $spec) use ($path) {
+		return $items->filterBy(function(InputSpecification $spec) use ($path) {
 			return $spec->getPath() === $path;
 		})
 			->first();
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isGrouped(): bool
 	{
 		return $this->first() instanceof Collection;
 	}
 
 
-	/**
-	 * @param callable    $filter
-	 * @param string|null $groupHash
-	 * @return CollectionOfSchemeInputs
-	 */
-	protected function filterBy(callable $filter, string $groupHash = null): CollectionOfSchemeInputs
+	protected function filterBy(callable $filter, string $groupHash = null): self
 	{
 		$items = $this;
 
