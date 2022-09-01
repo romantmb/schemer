@@ -2,6 +2,7 @@
 
 namespace Schemer\Tests\sandbox;
 
+use Schemer\Extensions\Forms\InputSpecification;
 use Schemer\Tests\Bootstrap;
 use Schemer\Tests\schemes\Inquiry;
 use Schemer\Bridges\SchemerNetteForms\FormExtender;
@@ -24,82 +25,28 @@ $scheme = Inquiry::buildScheme();
 
 // A) Basic way
 /*$form =*/ SchemeForm::from($scheme)
-	->into((new FormExtender)->extend(new Form))
-	->modify(function(Form $form) {
-		$form->addSubmit('update', 'Update');
+	->into((new FormExtender)->form(new Form), static function(Form $form) {
+		// ...
 	});
 
 // B) Factory way (recommended)
 $form = $schemeFormFactory
-	->create($scheme, new Form)
-	->modify(function(Form $form) {
+	->create($scheme, new Form, function(Form $form) {
+		$form->addText('test')->setDefaultValue('Foo');
 		$form->addSubmit('update', 'Update');
+	})
+	->groupedOnly()
+	->modify('maxCountOfQueries', fn(InputSpecification $spec) => $spec->setAsDisabled())
+	->onSubmit(function(SchemeForm $form) {
+		dump($form->getValues());
 	});
 
-dumpe($form);
-
-$form->render();
-exit;
-
-
-$inputs = (new FormsForSchemer)
-	->fromScheme($scheme)
-
-	// ToDo: Finish form inputs for existing nodes update
-	/*->filter(function(FormInputSpecification $spec) {
-		return $spec->getGroup() !== null;
-	})
-	->map(function(FormInputSpecification $spec) {
-		if ($spec->getName() === 'prizeId' && $spec->getGroup() !== null) {
-			$spec->setAsDisabled();
-		}
-	})*/
-
-//	->filter(function(FormInputSpecification $spec) {
-//		return $spec->getGroup() === null;
-//	})
-	->extendForm(new NetteFormExtender($form));
-
-if ($form->isSuccess()) {
-	$inputs->updateScheme($scheme, $form->getValues('array'));
-	$form = new Form;
-	(new FormsForSchemer)
-		->fromScheme($scheme)
-		->extendForm(new NetteFormExtender($form));
-}
-
-dump($inputs->fetchGrouped());
-
 $form->render();
 
-//		$form .= sprintf(
-//			'<input type="hidden" name="schemeId" value="%s">' .
-//				'<input type="submit" name="update" value="Update scheme">',
-//			$scheme->get('schemeId')->getValue()
-//		);
-//
-//		echo $form . '</form>';
-
-//	private static function handleSchemeUpdate(Node $scheme): void
-//	{
-//		$values = array_filter($_POST, function(& $value, $key) {
-//			return strpos($key, SchemePathToInputNameTransformer::INPUT_PREFIX) === 0;
-//		},ARRAY_FILTER_USE_BOTH);
-//
-//		$values = array_map(function($value) {
-//			if (in_array($value, [ 'true', 'false' ], true)) {
-//				$value = $value === 'true';
-//			}
-//			return $value;
-//		}, $values);
-//
-//		(new FormsForSchemer)
-//			->fromScheme($scheme)
-//			->updateScheme($scheme, $values);
-//
-//		echo sprintf('<h3>Updated scheme %s</h3>', ucfirst($scheme->get('schemeId')->getValue()));
-//
-//		self::print($scheme);
-//
-//		exit;
-//	}
+//if ($form->isSuccess()) {
+//	$inputs->updateScheme($scheme, $form->getValues('array'));
+//	$form = new Form;
+//	(new FormsForSchemer)
+//		->fromScheme($scheme)
+//		->extendForm(new NetteFormExtender($form));
+//}

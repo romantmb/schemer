@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Schemer\Extensions\Forms;
 
+use InvalidArgumentException;
 use Schemer\Property;
 use Schemer\Options;
 use Schemer\Validators\Inputs\NullableBooleanInput;
@@ -42,7 +43,7 @@ class InputSpecification
 
 	public function __construct(private Property $property, private SchemeForm $form)
 	{
-		$this->type = match (true) {
+		$this->setType(match (true) {
 			is_array($userValueProvider = $property->getValueProvider()) || ! empty($property->getOptionalValues()) =>
 				$userValueProvider instanceof ManyValuesProvider && $userValueProvider->multipleValues()
 					? 'multiselect'
@@ -53,7 +54,17 @@ class InputSpecification
 					: 'text',
 			default => throw new InvalidNodeException(sprintf(
 				'Array with options or an UserValueProvider expected, %s given.', var_export($property->getValueProvider(), true)))
+		});
+	}
+
+
+	public function setType(string $type): self
+	{
+		$this->type = match($type) {
+			'select', 'multiselect', 'switch', 'text', 'longtext' => $type,
+			default => throw new InvalidArgumentException(sprintf("'%s' is not a valid type.", $type)),
 		};
+		return $this;
 	}
 
 
@@ -306,9 +317,8 @@ class InputSpecification
 
 			$valueProvider = $this->property->getValueProvider();
 			$preserveKeys = $valueProvider instanceof ManyValuesProvider ? $valueProvider->preserveKeys() : false;
-			$options = is_array($valueProvider) ? $valueProvider : $this->property->getOptionalValues();
 
-			return collect($options)
+			return collect($this->property->getOptionalValues())
 				->mapWithKeys(function($value, $key) use ($preserveKeys) {
 
 					$v = $preserveKeys ? $key : $value;

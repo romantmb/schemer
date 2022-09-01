@@ -7,9 +7,8 @@
 
 declare(strict_types=1);
 
-namespace Schemer\Extensions;
+namespace Schemer\Extensions\Forms;
 
-use Schemer\Extensions\Forms\InputSpecification;
 use Schemer\Exceptions\SchemerException;
 use Illuminate\Support\Collection;
 
@@ -58,7 +57,7 @@ final class InputCollection extends Collection
 	}
 
 
-	protected function filterBy(callable $filter, string $groupHash = null): self
+	private function filterBy(callable $filter, string $groupHash = null): self
 	{
 		$items = $this;
 

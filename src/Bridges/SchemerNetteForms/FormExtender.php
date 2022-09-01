@@ -9,19 +9,27 @@ declare(strict_types=1);
 
 namespace Schemer\Bridges\SchemerNetteForms;
 
+use Closure;
+use Schemer\Extensions\Forms\SchemeForm;
 use Schemer\Extensions\Forms\FormExtender as Extender;
 use Schemer\Extensions\Forms\InputSpecification;
 use Nette\Forms\Form;
+use Nette\Forms\Controls\SelectBox;
 use Nette\Forms\Controls\BaseControl;
 use InvalidArgumentException;
+use LogicException;
 
 
 final class FormExtender implements Extender
 {
 	private Form $form;
 
+	private bool $extended = false;
 
-	public function extend($form): FormExtender
+	private Closure $_onSubmit;
+
+
+	public function form($form): FormExtender
 	{
 		if (! $form instanceof Form) {
 			throw new InvalidArgumentException(sprintf('Argument must be an instance of %s.', Form::class));
@@ -32,94 +40,103 @@ final class FormExtender implements Extender
 	}
 
 
-	public function getForm(): Form
+	public function extend(SchemeForm $with, callable $onAfter = null): FormExtender
 	{
-		return $this->form;
+		if (! $this->extended) {
+			$with->collect()->each(fn(InputSpecification $spec) => match (true) {
+				$spec->isHidden()      => $this->addHidden($spec),
+				$spec->isSelect()      => $this->addSelect($spec),
+				$spec->isMultiSelect() => $this->addCheckboxList($spec),
+				$spec->isSwitch()      => $this->addSwitch($spec),
+				default                => $this->addText($spec),
+			});
+
+			($onAfter ?? static fn($f) => $f)($this->form);
+			$this->extended = true;
+
+			if (isset($this->_onSubmit) && $this->isSuccess()) {
+				($this->_onSubmit)($with);
+			}
+		}
+
+		return $this;
+	}
+
+
+	public function onSubmit(callable $callback): FormExtender
+	{
+		if (is_a($this->form, 'Nette\Application\UI\SignalReceiver')) {
+			$this->form->onSubmit[] = $callback;
+
+		} else {
+			$this->_onSubmit = Closure::fromCallable($callback);
+		}
+
+		return $this;
+	}
+
+
+	public function isSuccess(): bool
+	{
+		return $this->getForm()->isSuccess();
+	}
+
+
+	public function getValues(): array
+	{
+		return $this->getForm()->getValues('array');
 	}
 
 
 	public function render(...$args): void
 	{
-		$this->form->render(...$args);
+		$this->getForm()->render(...$args);
+	}
+
+
+	public function getForm(): Form
+	{
+		if (! $this->extended) {
+			throw new LogicException('Form has not yet been extended.');
+		}
+
+		return $this->form;
 	}
 
 
 	public function addSelect(InputSpecification $spec): FormExtender
 	{
-		$spec->setFormControl(
-			$this->form->addSelect($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
-				->setPrompt('(choose one)')
-				->setRequired($spec->isRequired())
-				->setDisabled($spec->isDisabled())
-				->setDefaultValue($spec->getValue())
-				->setHtmlAttribute('data-has-conditional-siblings', $spec->hasAnyConditionalSiblings())
-		);
-
-		return $this;
+		return $this->addFormControl($spec, 'Select');
 	}
 
 
 	public function addCheckboxList(InputSpecification $spec): FormExtender
 	{
-		$spec->setFormControl(
-			$this->form->addCheckboxList($spec->getInputName(), $spec->getLabel(), $spec->getOptions())
-				->setRequired($spec->isRequired())
-				->setDisabled($spec->isDisabled())
-				->setDefaultValue($spec->getValue())
-		);
-
-		return $this;
+		return $this->addFormControl($spec, 'CheckboxList');
 	}
 
 
 	public function addSwitch(InputSpecification $spec): FormExtender
 	{
-		$spec->setFormControl(
-			$this->form->addCheckbox($spec->getInputName(), $spec->getLabel())
-				->setRequired($spec->isRequired())
-				->setDisabled($spec->isDisabled())
-				->setDefaultValue($spec->getValue())
-				->setHtmlAttribute('data-has-conditional-siblings', $spec->hasAnyConditionalSiblings())
-		);
-
-		return $this;
+		return $this->addFormControl($spec, 'Checkbox');
 	}
 
 
 	public function addText(InputSpecification $spec): FormExtender
 	{
-		$spec->setFormControl(
-			$this->form->addText($spec->getInputName(), $spec->getLabel())
-				->setRequired($spec->isRequired())
-				->setDisabled($spec->isDisabled())
-				->setDefaultValue($spec->getValue())
-		);
-
-		return $this;
+		return $this->addFormControl($spec, 'Text');
 	}
 
 
 	public function addTextArea(InputSpecification $spec): FormExtender
 	{
-		$spec->setFormControl(
-			$this->form->addTextArea($spec->getInputName(), $spec->getLabel())
-				->setRequired($spec->isRequired())
-				->setDisabled($spec->isDisabled())
-				->setDefaultValue($spec->getValue())
-		);
-
-		return $this;
+		return $this->addFormControl($spec, 'TextArea');
 	}
 
 
 	public function addHidden(InputSpecification $spec): FormExtender
 	{
-		$spec->setFormControl(
-			$this->form->addHidden($spec->getInputName())
-				->setDefaultValue($spec->getValue())
-		);
-
-		return $this;
+		return $this->addFormControl($spec, 'Hidden');
 	}
 
 
@@ -129,6 +146,49 @@ final class FormExtender implements Extender
 			->addError($message);
 
 		return $this;
+	}
+
+
+	private function addFormControl(InputSpecification $spec, string $type): self
+	{
+		/** @var BaseControl $control */
+		$control = $this->form->{"add$type"}(...self::args($spec, $type))
+			->setDefaultValue($spec->getValue());
+
+		if ($type !== 'Hidden') {
+			$control
+				->setRequired($spec->isRequired())
+				->setDisabled($spec->isDisabled());
+		}
+
+		if ($type === 'Select') {
+			/** @var SelectBox $control */
+			$control->setPrompt('(choose one)');
+		}
+
+		if (in_array($type, [ 'Select', 'Switch' ])) {
+			$control->setHtmlAttribute('data-has-conditional-siblings', $spec->hasAnyConditionalSiblings());
+		}
+
+		$spec->setFormControl($control);
+
+		return $this;
+	}
+
+
+	private static function args(InputSpecification $spec, string $type): array
+	{
+		$args = [ $spec->getInputName() ];
+
+		if ($type !== 'Hidden') {
+			$args[] = $spec->getLabel();
+		}
+
+		if (in_array($type, [ 'Select', 'CheckboxList' ])) {
+			$args[] = $spec->getOptions();
+		}
+
+		return $args;
 	}
 
 

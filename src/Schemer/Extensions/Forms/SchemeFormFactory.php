@@ -18,7 +18,7 @@ final class SchemeFormFactory
 	private FormExtender $defaultFormExtender;
 
 
-	public function create(Node $scheme, mixed $formSource = null): SchemeForm
+	public function create(Node $scheme, mixed $formSource = null, callable $afterExtend = null): SchemeForm
 	{
 		$schemeForm = SchemeForm::from($scheme)
 			->setFormExtender($this->defaultFormExtender ??
@@ -28,6 +28,8 @@ final class SchemeFormFactory
 		if ($formSource !== null) {
 			$schemeForm->into($formSource);
 		}
+
+		$schemeForm->afterExtend($afterExtend);
 
 		return $schemeForm;
 	}

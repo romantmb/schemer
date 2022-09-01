@@ -10,55 +10,50 @@ declare(strict_types=1);
 namespace Schemer
 {
 
-	/**
-	 * @param mixed ...$nodes
-	 * @return Node
-	 */
 	function bag(...$nodes): Node
 	{
 		return Scheme::bag(...$nodes);
 	}
 
 
-	/**
-	 * @param string $name
-	 * @param mixed  ...$content
-	 * @return Property
-	 */
 	function property(string $name, ...$content): Property
 	{
 		return Scheme::prop($name, ...$content);
 	}
 
 
-	/**
-	 * @param string $name
-	 * @param mixed  ...$content
-	 * @return Options
-	 */
 	function candidates(string $name, ...$content): Options
 	{
 		return Scheme::candidates($name, ...$content);
 	}
 
 
-	/**
-	 * @param string $name
-	 * @param mixed  ...$content
-	 * @return Options
-	 */
 	function options(string $name, ...$content): Options
 	{
 		return Scheme::options($name, ...$content);
 	}
 
 
-	/**
-	 * @param mixed ...$content
-	 * @return Group
-	 */
 	function group(...$content): Group
 	{
 		return Scheme::group(...$content);
 	}
+
+
+	// as short as possible (for those who know it well)
+
+	/** bag */
+	function b(...$nodes): Node { return bag(...$nodes); }
+
+	/** property */
+	function p(string $name, ...$content): Property { return property($name, ...$content); }
+
+	/** candidates */
+	function c(string $name, ...$content): Options { return candidates($name, ...$content); }
+
+	/** options */
+	function o(string $name, ...$content): Options { return options($name, ...$content); }
+
+	/** group */
+	function g(...$content): Group { return group(...$content); }
 }
