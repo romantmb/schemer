@@ -2,51 +2,48 @@
 
 namespace Schemer\Tests\sandbox;
 
-use Schemer\Extensions\Forms\InputSpecification;
 use Schemer\Tests\Bootstrap;
 use Schemer\Tests\schemes\Inquiry;
 use Schemer\Bridges\SchemerNetteForms\FormExtender;
+use Schemer\Extensions\Forms\InputSpecification;
 use Schemer\Extensions\Forms\SchemeForm;
 use Schemer\Extensions\Forms\SchemeFormFactory;
-use Schemer\Extensions\FormsForSchemer;
 use Nette\Forms\Form;
 
 require __DIR__ . '/../Bootstrap.php';
 
 Bootstrap::boot();
 
-//Debugger::enable();
-//Debugger::$maxDepth = 6;
-
 $schemeFormFactory = (new SchemeFormFactory)
 	->setFormExtender(new FormExtender);
 
-$scheme = Inquiry::buildScheme();
+$scheme = Inquiry::buildScheme()
+	->initialize($_GET['scheme'] ?? []);
 
 // A) Basic way
 /*$form =*/ SchemeForm::from($scheme)
-	->into((new FormExtender)->form(new Form), static function(Form $form) {
+	->into((new FormExtender)->with(new Form), static function(Form $form) {
 		// ...
 	});
 
 // B) Factory way (recommended)
 $form = $schemeFormFactory
 	->create($scheme, new Form, function(Form $form) {
-		$form->addText('test')->setDefaultValue('Foo');
 		$form->addSubmit('update', 'Update');
 	})
-	->groupedOnly()
+	->notGroupedOnly()
 	->modify('maxCountOfQueries', fn(InputSpecification $spec) => $spec->setAsDisabled())
 	->onSubmit(function(SchemeForm $form) {
-		dump($form->getValues());
+		$form->updateScheme();
+	})
+	->onSuccess(function(SchemeForm $form) {
+		header('Location: ?scheme=' . urlencode($form->getScheme()->toJson()));
+		exit;
+	})
+	->onError(function(SchemeForm $form) {
+		dump($form->getErrors());
 	});
 
 $form->render();
 
-//if ($form->isSuccess()) {
-//	$inputs->updateScheme($scheme, $form->getValues('array'));
-//	$form = new Form;
-//	(new FormsForSchemer)
-//		->fromScheme($scheme)
-//		->extendForm(new NetteFormExtender($form));
-//}
+printf('<pre>%s</pre>', $scheme->toJson(JSON_PRETTY_PRINT));

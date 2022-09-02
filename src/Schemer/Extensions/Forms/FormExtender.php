@@ -13,13 +13,13 @@ namespace Schemer\Extensions\Forms;
 interface FormExtender
 {
 
-	public function form($form): FormExtender;
+	public function with($form): FormExtender;
 
 
-	public function extend(SchemeForm $with, callable $onAfter = null): FormExtender;
+	public function extend(SchemeForm $schemeForm, callable $onAfter = null): FormExtender;
 
 
-	public function onSubmit(callable $callback): FormExtender;
+	public function render(): void;
 
 
 	public function isSuccess(): bool;
@@ -28,7 +28,19 @@ interface FormExtender
 	public function getValues(): array;
 
 
-	public function render(): void;
+	public function getErrors(): array;
+
+
+	public function onValidate(callable $callback): FormExtender;
+
+
+	public function onSubmit(callable $callback): FormExtender;
+
+
+	public function onSuccess(callable $callback): FormExtender;
+
+
+	public function onError(callable $callback): FormExtender;
 
 
 	public function getForm(): object;

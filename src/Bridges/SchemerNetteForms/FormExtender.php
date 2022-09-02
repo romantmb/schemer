@@ -3,19 +3,21 @@
 /**
  * Schemer
  * @author Roman Pistek
+ * @noinspection PhpUnusedPrivateFieldInspection
  */
 
 declare(strict_types=1);
 
 namespace Schemer\Bridges\SchemerNetteForms;
 
-use Closure;
 use Schemer\Extensions\Forms\SchemeForm;
 use Schemer\Extensions\Forms\FormExtender as Extender;
 use Schemer\Extensions\Forms\InputSpecification;
+use Schemer\Exceptions\SchemeFormException;
 use Nette\Forms\Form;
 use Nette\Forms\Controls\SelectBox;
 use Nette\Forms\Controls\BaseControl;
+use Closure;
 use InvalidArgumentException;
 use LogicException;
 
@@ -26,10 +28,24 @@ final class FormExtender implements Extender
 
 	private bool $extended = false;
 
+	private Closure $_onValidate;
+
 	private Closure $_onSubmit;
 
+	private Closure $_onSuccess;
 
-	public function form($form): FormExtender
+	private Closure $_onError;
+
+
+	public function __construct(mixed $form = null)
+	{
+		if (isset($form)) {
+			$this->with($form);
+		}
+	}
+
+
+	public function with($form): self
 	{
 		if (! $form instanceof Form) {
 			throw new InvalidArgumentException(sprintf('Argument must be an instance of %s.', Form::class));
@@ -40,39 +56,40 @@ final class FormExtender implements Extender
 	}
 
 
-	public function extend(SchemeForm $with, callable $onAfter = null): FormExtender
+	public function extend(SchemeForm $schemeForm, callable $onAfter = null): self
 	{
-		if (! $this->extended) {
-			$with->collect()->each(fn(InputSpecification $spec) => match (true) {
-				$spec->isHidden()      => $this->addHidden($spec),
-				$spec->isSelect()      => $this->addSelect($spec),
-				$spec->isMultiSelect() => $this->addCheckboxList($spec),
-				$spec->isSwitch()      => $this->addSwitch($spec),
-				default                => $this->addText($spec),
-			});
+		if ($this->extended) {
+			return $this;
+		}
 
-			($onAfter ?? static fn($f) => $f)($this->form);
-			$this->extended = true;
+		$schemeForm->collect()->each(fn(InputSpecification $spec) => match (true) {
+			$spec->isHidden()      => $this->addHidden($spec),
+			$spec->isSelect()      => $this->addSelect($spec),
+			$spec->isMultiSelect() => $this->addCheckboxList($spec),
+			$spec->isSwitch()      => $this->addSwitch($spec),
+			default                => $this->addText($spec),
+		});
 
-			if (isset($this->_onSubmit) && $this->isSuccess()) {
-				($this->_onSubmit)($with);
-			}
+		$n = static fn($f) => $f;
+
+		($onAfter ?? $n)($this->form());
+		$this->extended = true;
+
+		if (! $this->signalDrivenForm() && $this->form()->isSubmitted()) {
+			($this->_onValidate ?? $n)($schemeForm);
+			($this->_onSubmit ?? $n)($schemeForm);
+			$this->isSuccess()
+				? ($this->_onSuccess ?? $n)($schemeForm)
+				: ($this->_onError ?? $n)($schemeForm);
 		}
 
 		return $this;
 	}
 
 
-	public function onSubmit(callable $callback): FormExtender
+	public function render(...$args): void
 	{
-		if (is_a($this->form, 'Nette\Application\UI\SignalReceiver')) {
-			$this->form->onSubmit[] = $callback;
-
-		} else {
-			$this->_onSubmit = Closure::fromCallable($callback);
-		}
-
-		return $this;
+		$this->getForm()->render(...$args);
 	}
 
 
@@ -88,9 +105,33 @@ final class FormExtender implements Extender
 	}
 
 
-	public function render(...$args): void
+	public function getErrors(): array
 	{
-		$this->getForm()->render(...$args);
+		return $this->getForm()->getErrors();
+	}
+
+
+	public function onValidate(callable $callback): self
+	{
+		return $this->registerEventHandler(on: 'validate', do: $callback);
+	}
+
+
+	public function onSubmit(callable $callback): self
+	{
+		return $this->registerEventHandler(on: 'submit', do: $callback);
+	}
+
+
+	public function onSuccess(callable $callback): self
+	{
+		return $this->registerEventHandler(on: 'success', do: $callback);
+	}
+
+
+	public function onError(callable $callback): self
+	{
+		return $this->registerEventHandler(on: 'error', do: $callback);
 	}
 
 
@@ -100,49 +141,49 @@ final class FormExtender implements Extender
 			throw new LogicException('Form has not yet been extended.');
 		}
 
-		return $this->form;
+		return $this->form();
 	}
 
 
-	public function addSelect(InputSpecification $spec): FormExtender
+	public function addSelect(InputSpecification $spec): self
 	{
 		return $this->addFormControl($spec, 'Select');
 	}
 
 
-	public function addCheckboxList(InputSpecification $spec): FormExtender
+	public function addCheckboxList(InputSpecification $spec): self
 	{
 		return $this->addFormControl($spec, 'CheckboxList');
 	}
 
 
-	public function addSwitch(InputSpecification $spec): FormExtender
+	public function addSwitch(InputSpecification $spec): self
 	{
 		return $this->addFormControl($spec, 'Checkbox');
 	}
 
 
-	public function addText(InputSpecification $spec): FormExtender
+	public function addText(InputSpecification $spec): self
 	{
 		return $this->addFormControl($spec, 'Text');
 	}
 
 
-	public function addTextArea(InputSpecification $spec): FormExtender
+	public function addTextArea(InputSpecification $spec): self
 	{
 		return $this->addFormControl($spec, 'TextArea');
 	}
 
 
-	public function addHidden(InputSpecification $spec): FormExtender
+	public function addHidden(InputSpecification $spec): self
 	{
 		return $this->addFormControl($spec, 'Hidden');
 	}
 
 
-	public function addError(string $message, string $inputName = null): FormExtender
+	public function addError(string $message, string $inputName = null): self
 	{
-		($inputName !== null ? $this->getControl($inputName) : $this->form)
+		($inputName !== null ? $this->getControl($inputName) : $this->form())
 			->addError($message);
 
 		return $this;
@@ -152,7 +193,7 @@ final class FormExtender implements Extender
 	private function addFormControl(InputSpecification $spec, string $type): self
 	{
 		/** @var BaseControl $control */
-		$control = $this->form->{"add$type"}(...self::args($spec, $type))
+		$control = $this->form()->{"add$type"}(...self::args($spec, $type))
 			->setDefaultValue($spec->getValue());
 
 		if ($type !== 'Hidden') {
@@ -197,6 +238,30 @@ final class FormExtender implements Extender
 	 */
 	private function getControl(string $name): BaseControl
 	{
-		return $this->form->getComponent($name);
+		return $this->form()->getComponent($name);
+	}
+
+
+	private function registerEventHandler(string $on, callable $do): self
+	{
+		if ($this->signalDrivenForm()) {
+			$this->form()->{'on'.ucfirst($on)}[] = $do;
+			return $this;
+		}
+
+		$this->{'_on'.ucfirst($on)} = Closure::fromCallable($do);
+		return $this;
+	}
+
+
+	private function signalDrivenForm(): bool
+	{
+		return is_a($this->form(), 'Nette\Application\UI\SignalReceiver');
+	}
+
+
+	private function form(): Form
+	{
+		return $this->form ?? throw new SchemeFormException('Undefined form.');
 	}
 }

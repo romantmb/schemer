@@ -9,15 +9,23 @@ declare(strict_types=1);
 
 namespace Schemer\Extensions\Forms;
 
+use Schemer\Exceptions\ItemNotFoundException;
 use Schemer\Extensions\Transformers\HumanReadableSlugTransformer;
 use Schemer\Node;
+use Schemer\Options;
+use Schemer\Property;
+use Schemer\StaticArrayProvider;
+use Schemer\UserValueProvider;
+use Schemer\ValueProvider;
 use Schemer\Exceptions\SchemerException;
-use Closure;
 use InvalidArgumentException;
+use Closure;
 
 
 final class SchemeForm
 {
+	private InputCollection $collection;
+
 	private ?FormExtender $formExtender = null;
 
 	private HumanReadableSlugTransformer $humanReadableSlugTransformer;
@@ -60,17 +68,22 @@ final class SchemeForm
 		}
 
 		$this->formExtender
-			?->form($formSource)
+			?->with($formSource)
 			?? throw new SchemerException('...');
 
 		return $this;
 	}
 
 
-	public function onSubmit(callable $callback): self
+	public function getScheme(): Node
 	{
-		$this->formExtender(extend: false)->onSubmit($callback);
-		return $this;
+		return $this->scheme;
+	}
+
+
+	public function render(...$args): void
+	{
+		$this->formExtender()->render(...$args);
 	}
 
 
@@ -86,15 +99,102 @@ final class SchemeForm
 	}
 
 
-	public function updateScheme(): self
+	public function getErrors(): array
 	{
-
+		return $this->formExtender()->getErrors();
 	}
 
 
-	public function render(...$args): void
+	/**
+	 * Validation before scheme update
+	 */
+	public function onValidate(callable $callback): self
 	{
-		$this->formExtender()->render(...$args);
+		return $this->delegateToExtender(__METHOD__, $callback);
+	}
+
+
+	/**
+	 * If nothing changes, scheme is updated with submitted data
+	 */
+	public function onSubmit(callable $callback): self
+	{
+		return $this->delegateToExtender(__METHOD__, $callback);
+	}
+
+
+	/**
+	 * All good after scheme update, great time to put updated scheme into storage
+	 */
+	public function onSuccess(callable $callback): self
+	{
+		return $this->delegateToExtender(__METHOD__, $callback);
+	}
+
+
+	/**
+	 * If any error occurred
+	 */
+	public function onError(callable $callback): self
+	{
+		return $this->delegateToExtender(__METHOD__, $callback);
+	}
+
+
+	public function updateScheme(?Node $scheme = null): self
+	{
+		$scheme ??= $this->scheme;
+
+		$uniqueKeys = collect();
+
+		foreach ($this->getValues() as $id => $value) {
+
+			if (! $spec = $this->collect()->get($id)) {
+				throw new ItemNotFoundException(sprintf("Schemer form input with name '%s' not found.", $id));
+			}
+
+			$path = $spec->getPath();
+
+			$uniqueKeys->map(function($value, $prop) use (& $path) {
+				$path = str_replace("[$prop=*]", "[$prop=$value]", $path);
+			});
+
+			try {
+//				if (is_callable($sanitizer)) {
+//					$value = $sanitizer($spec, $value);
+//				}
+//
+//				$this->validation($scheme, $spec, $value);
+
+				if ((! is_string($value) || ! str_contains($value, '='))
+					&& $spec->getProperty()->isUniqueKey()) {
+					$value = sprintf('%s=%s', $spec->getName(), is_array($value) ? implode(',', $value) : $value);
+				}
+
+				if (($key = $scheme->set($path, $value)->getKey()) !== null) {
+					call_user_func_array([ $uniqueKeys, 'put' ], explode('=', $key));
+				}
+
+			} catch (SchemerException $e) {
+//				if ($this->_onError !== null) {
+//					if (($this->_onError)($e, $spec, $value) === true) { continue; } // ignore error & proceed
+//					return;
+//				}
+//
+//				if ($this->formExtender !== null) {
+//					$this->formExtender->addError($e->getMessage(), $id);
+//					return;
+//				}
+
+				throw $e;
+			}
+		}
+
+//		if ($this->_onSuccess !== null) {
+//			($this->_onSuccess)($scheme);
+//		}
+
+		return $this;
 	}
 
 
@@ -135,7 +235,7 @@ final class SchemeForm
 	}
 
 
-	public function ungroupedOnly(): self
+	public function notGroupedOnly(): self
 	{
 		return $this->filter(fn(InputSpecification $spec) => $spec->getGroup() === null);
 	}
@@ -143,8 +243,9 @@ final class SchemeForm
 
 	public function collect(): InputCollection
 	{
-		// Finish...
-		return new InputCollection;
+		return $this->collection ??= $this->dig($this->scheme)
+			->filter($this->evalFilters())
+			->mapWithKeys(fn(InputSpecification $spec) => [ $spec->getInputName() => $spec ]);
 	}
 
 
@@ -170,6 +271,14 @@ final class SchemeForm
 	}
 
 
+	private function delegateToExtender(string $method, ...$args): self
+	{
+		$method = substr($method, ($offset = strrpos($method, '::')) !== false ? ($offset + 2) : 0);
+		$this->formExtender(extend: false)->$method(...$args);
+		return $this;
+	}
+
+
 	private function formExtender(bool $extend = true): FormExtender
 	{
 		if (! isset($this->formExtender)) {
@@ -177,20 +286,78 @@ final class SchemeForm
 		}
 
 		return $extend
-			? $this->formExtender->extend(with: $this, onAfter: $this->_afterExtend)
+			? $this->formExtender->extend(schemeForm: $this, onAfter: $this->_afterExtend)
 			: $this->formExtender;
-	}
-
-
-	private function form(): object
-	{
-		return $this->formExtender()->getForm()
-			?? throw new SchemerException(sprintf('Undefined form. Call %s::into() first.', self::class));
 	}
 
 
 	private function flush(): void
 	{
 		unset($this->fetched);
+	}
+
+
+	private function evalFilters(): callable
+	{
+		return fn(InputSpecification $spec) => collect($this->_filters)
+			->sum(fn(callable $f) => (int) ($f($spec) === true)) === count($this->_filters);
+	}
+
+
+	private function dig(Node $node): InputCollection
+	{
+		$founds = new InputCollection;
+
+		$finder = function(Node $node) use ($founds, & $finder) {
+
+			if (empty($children = $node->getChildren())) {
+
+				if ($node instanceof Options) {
+
+					/** @var Property $candidateUniqueKeyProperty */
+					$candidateUniqueKeyProperty = null;
+
+					foreach ($node->getCandidates() as /*$name =>*/ $valueProvider) {
+						/** @var ValueProvider $valueProvider */
+
+						$property = $valueProvider->getProperty();
+
+						$founds->push(
+							(new InputSpecification($property, $this))
+								->setPropertyWithUniqueKey($candidateUniqueKeyProperty)
+						);
+
+						if ($property && $property->isUniqueKey()) {
+							$candidateUniqueKeyProperty = $property;
+						}
+					}
+
+					foreach ($node->getItems() as $picked) {
+
+						if ($picked instanceof Node) {
+							$finder($picked);
+						}
+					}
+
+				} elseif ($node instanceof Property) {
+
+					if (($provider = $node->getValueProvider()) instanceof UserValueProvider
+						|| $provider instanceof StaticArrayProvider) {
+
+						$founds->push(new InputSpecification($node, $this));
+					}
+				}
+
+				return;
+			}
+
+			foreach ($children as $child) {
+				$finder($child);
+			}
+		};
+
+		$finder($node);
+
+		return $founds;
 	}
 }

@@ -88,7 +88,7 @@ class InputSpecification
 
 	public function isRequired(): bool
 	{
-		if ($this->required !== null) {
+		if (isset($this->required)) {
 			return $this->required;
 		}
 
