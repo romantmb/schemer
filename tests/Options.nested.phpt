@@ -11,9 +11,11 @@ declare(strict_types=1);
 
 namespace Schemer\Tests;
 
+use Schemer\NamedNode;
 use Schemer\Options;
 use Schemer\Tests\schemes\Inquiry;
 use Schemer\Exceptions\ItemNotFoundException;
+use Schemer\Traverser;
 use Tester\Assert;
 
 require __DIR__ . '/Bootstrap.php';
@@ -97,7 +99,7 @@ JSON,
 		->pick('key=a'))
 		?->set('option', 'Red');
 
-	Assert::same(<<<JSON
+	Assert::same($output = <<<JSON
 {
     "inquiry": {
         "settings": {
@@ -175,4 +177,20 @@ JSON,
 		$scheme->get('inquiry.steps[type=chooseOne].prompt.options[key=b].option')->getValue()
 	);
 
+	// initialized scheme
+	$restoredScheme = Inquiry::buildScheme()->initialize($output); // $output from line 100
+
+	Assert::same(
+		'inquiry.steps[type=chooseOne].prompt.options[key=a].correct',
+		$restoredScheme->get('inquiry.steps[type=chooseOne].prompt.options[key=a].correct')->getPath()
+	);
+
+	foreach (Traverser::run($restoredScheme) as $level => $node) {
+		printf(
+			"%'-{$level}s %s (%s): %s\n", '-',
+			$node instanceof NamedNode ? $node->getName() : '*',
+			$node::class,
+			$node->getPath(),
+		);
+	}
 });

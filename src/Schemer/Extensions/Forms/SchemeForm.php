@@ -327,7 +327,7 @@ final class SchemeForm
 								->setPropertyWithUniqueKey($candidateUniqueKeyProperty)
 						);
 
-						if ($property && $property->isUniqueKey()) {
+						if ($property?->isUniqueKey()) {
 							$candidateUniqueKeyProperty = $property;
 						}
 					}
@@ -357,6 +357,12 @@ final class SchemeForm
 		};
 
 		$finder($node);
+
+		dump(
+			collect($founds)
+				->mapWithKeys(fn(InputSpecification $spec) => [ $spec->getName() => $spec->getPath() ])
+				->all()
+		);
 
 		return $founds;
 	}

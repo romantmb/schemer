@@ -228,7 +228,6 @@ class InputSpecification
 
 
 	/**
-	 * @return string
 	 * @throws SchemerException
 	 */
 	public function getHumanValue(): string
@@ -268,7 +267,7 @@ class InputSpecification
 	}
 
 
-	public function setPropertyWithUniqueKey(Property $property = null): InputSpecification
+	public function setPropertyWithUniqueKey(?Property $property = null): InputSpecification
 	{
 		if ($property !== null && $property !== $this->property && $property->isUniqueKey()) {
 			$this->propertyWithUniqueKey = $property;

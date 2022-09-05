@@ -15,65 +15,43 @@ use Schemer\Exceptions\ItemNotFoundException;
 use Schemer\Exceptions\InvalidUniqueKeyException;
 use Schemer\Exceptions\UndeterminedPropertyException;
 use Illuminate\Support\Collection;
+use stdClass;
 
 
 final class Options extends Node implements NamedNode
 {
-	/** @var string */
-	private $name;
+	private ?string $itemType = null;
 
-	/** @var string */
-	private $itemType;
+	private ?bool $associative = null;
 
-	/** @var bool */
-	private $associative;
+	private array $candidates = [];
 
-	/** @var array */
-	private $candidates = [];
-
-	/** @var array */
-	private $items = [];
+	private array $items = [];
 
 
-	/**
-	 * @param string    $name
-	 * @param Node|null $parent
-	 */
-	public function __construct(string $name, Node $parent = null)
+	public function __construct(private string $name, ?Node $parent = null)
 	{
-		parent::__construct($parent);
-
 		if (! $name) {
 			throw new InvalidNodeException('Options name must be defined.');
 		}
 
-		$this->name = $name;
+		parent::__construct($parent);
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getName(): string
 	{
 		return $this->name;
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function containsPrimitives(): bool
 	{
 		return ! in_array($this->itemType, [ null, 'node' ], true);
 	}
 
 
-	/**
-	 * @param  mixed $items
-	 * @return static
-	 */
-	public function setItems($items): Options
+	public function setItems(mixed $items): self
 	{
 		$this->reset();
 
@@ -85,11 +63,7 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param  mixed $candidates
-	 * @return static
-	 */
-	public function setCandidates($candidates): Options
+	public function setCandidates(mixed $candidates): self
 	{
 		$this->clear();
 
@@ -101,18 +75,13 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param mixed      $child
-	 * @param mixed|null $key
-	 * @return Options
-	 */
-	public function add($child, $key = null): Node
+	public function add(mixed $child, mixed $key = null): self
 	{
 		return $this->addItem($this->items, $child, $key);
 	}
 
 
-	public function addCandidate($item, $key = null): Options
+	public function addCandidate(mixed $item, mixed $key = null): self
 	{
 		return $this->addItem($this->candidates, $item, $key);
 	}
@@ -142,13 +111,10 @@ final class Options extends Node implements NamedNode
 			->map(static function(Node $item) { return $item->getChildren(); })
 			->flatten()
 			->filter(static function(NamedNode $node) {
-				return $node instanceof NamedNodeWithValue
-					&& (! $node instanceof Property || ! $node->isBag());
+				return $node instanceof NamedNodeWithValue && ! $node->isBag();
 			})
 			->mapWithKeys(static function(NamedNodeWithValue $node) {
-				return [
-					$node->getName() => $node instanceof Property ? $node->getValueProvider() : $node->getValue()
-				];
+				return [ $node->getName() => $node->getValueProvider() ];
 			});
 
 		if ($sortByPriority === false) {
@@ -177,9 +143,6 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @return Property|null
-	 */
 	public function getUniqueKeyProperty(): ?Property
 	{
 		return ! $this->containsPrimitives()
@@ -190,9 +153,6 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param bool $hard
-	 */
 	public function reset(bool $hard = false): void
 	{
 		$this->items = [];
@@ -210,15 +170,9 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param string      $definition
-	 * @param string|null $value
-	 * @param bool        $checkIfExistsOnly
-	 * @return Node|ArrayItem|null
-	 */
-	public function pick(string $definition, $value = null, bool $checkIfExistsOnly = false)
+	public function pick(string $definition, ?string $value = null, bool $checkIfExistsOnly = false): Node|ArrayItem|null
 	{
-		if (strpos($definition, '=') !== false) {
+		if (str_contains($definition, '=')) {
 			[ $definition, $value ] = explode('=', $definition);
 		}
 
@@ -270,22 +224,13 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param string $def
-	 * @return bool
-	 */
 	public function hasPicked(string $def): bool
 	{
 		return $this->findItem($def) !== null;
 	}
 
 
-	/**
-	 * @param array|string $data
-	 * @param bool         $ignoreNonExistingNodes
-	 * @return Node
-	 */
-	public function initialize($data, bool $ignoreNonExistingNodes = false): Node
+	public function initialize(array|string|stdClass $data, bool $ignoreNonExistingNodes = false): Node
 	{
 		if ($this->containsPrimitives()) {
 
