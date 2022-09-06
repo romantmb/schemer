@@ -19,10 +19,10 @@ use Throwable;
 
 class UserValueProvider implements ValueProvider
 {
-	private ?Property $property = null;
+	protected ?Property $property = null;
 
 
-	public function __construct(private string $validatorClass)
+	public function __construct(protected string $validatorClass)
 	{
 		if (! is_subclass_of($validatorClass, Input::class)) {
 			throw new InvalidArgumentException(sprintf('Validator must be an instance of %s, %s given.', Input::class, $validatorClass));
