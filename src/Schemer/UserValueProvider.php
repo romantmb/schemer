@@ -30,9 +30,6 @@ class UserValueProvider implements ValueProvider
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getValidatorClass(): string
 	{
 		return $this->validatorClass;
@@ -42,7 +39,7 @@ class UserValueProvider implements ValueProvider
 	/**
 	 * @throws Throwable
 	 */
-	public function setValue(mixed $value): UserInputValidator|string|int|array|bool|null
+	public function setValue(mixed $value)
 	{
 		try {
 			return UserInputValidator::simple(
@@ -58,7 +55,7 @@ class UserValueProvider implements ValueProvider
 	}
 
 
-	public function getValue(): mixed
+	public function getValue()
 	{
 		return $this->property?->getRawValue();
 	}
