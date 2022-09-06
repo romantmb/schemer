@@ -289,9 +289,6 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param Node $node
-	 */
 	public function remove(Node $node): void
 	{
 		foreach ($this->items as $key => $item) {
@@ -310,19 +307,12 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param mixed $value
-	 * @return string
-	 */
-	public static function serializeValue($value): string
+	public static function serializeValue(mixed $value): string
 	{
 		return is_array($value) ? implode(',', $value) : (string) $value;
 	}
 
 
-	/**
-	 * @return Collection
-	 */
 	protected function collection(): Collection
 	{
 		$collection = collect($this->getItems());
@@ -338,50 +328,30 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param string $by
-	 * @return Node|ArrayItem|null
-	 */
-	private function findItem(string $by)
+	private function findItem(string $by): Node|ArrayItem|null
 	{
 		foreach ($this->items as $item) {
 			if ($item->getKey() === $by) {
 				return $item;
 			}
 		}
-
 		return null;
 	}
 
 
-	/**
-	 * @param string        $by
-	 * @param callable|null $onSuccess
-	 * @return Node|ArrayItem|null
-	 * @internal
-	 */
-	private function findCandidate(string $by, callable $onSuccess = null)
+	private function findCandidate(string $by, callable $onSuccess = null): Node|ArrayItem|null
 	{
 		foreach ($this->candidates as $candidate) {
-
 			if (($candidate instanceof Node && $candidate->find($by))
 				|| ($candidate instanceof ArrayItem && $candidate->getKey() === $by)) {
-
 				return $onSuccess === null ? clone $candidate : $onSuccess(clone $candidate);
 			}
 		}
-
 		return null;
 	}
 
 
-	/**
-	 * @param array       $into
-	 * @param mixed       $item
-	 * @param string|null $key
-	 * @return Options
-	 */
-	private function addItem(array & $into, $item, $key = null): Options
+	private function addItem(array & $into, mixed $item, string|int|null $key = null): Options
 	{
 		if ($item instanceof ArrayItem) {
 			$key = $item->getKey();
@@ -437,7 +407,6 @@ final class Options extends Node implements NamedNode
 
 		if ($uniqueKeyCount === 0) {
 			throw new InvalidUniqueKeyException(sprintf("One of the properties in '%s' must be set as unique key. (Use uniqueKey() marker.)", $this->getPath()));
-
 		}
 
 		if ($uniqueKeyCount > 1) {
@@ -446,11 +415,7 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param  mixed $key
-	 * @return string|null
-	 */
-	private function sanitizeArrayKey($key): ?string
+	private function sanitizeArrayKey(mixed $key): ?string
 	{
 		$key = is_string($key) && $key !== '' ? $key : null;
 
@@ -464,41 +429,26 @@ final class Options extends Node implements NamedNode
 	}
 
 
-	/**
-	 * @param mixed $item
-	 * @return string
-	 */
-	private static function getItemType($item): string
+	private static function getItemType(mixed $item): string
 	{
-		if ($item instanceof Node) {
-			return 'node';
-		}
-
-		if ($item instanceof ArrayItem) {
-			return gettype($item->getValue());
-		}
-
-		$mismatch = is_object($item) ? get_class($item) : gettype($item);
-		throw new InvalidValueException(sprintf('%s is not a valid option item.', $mismatch));
+		return match (true) {
+			$item instanceof Node => 'node',
+			$item instanceof ArrayItem => gettype($item->getValue()),
+			default => throw new InvalidValueException(sprintf(
+				'%s is not a valid option item.', get_debug_type($item))),
+		};
 	}
 
 
-	/**
-	 * @internal
-	 * @param  mixed $values
-	 * @return array
-	 */
-	private static function valuesFromProviderIfAny($values): array
+	private static function valuesFromProviderIfAny(mixed $values): array
 	{
-		if (is_array($values)) {
-			return $values;
-		}
-
-		if ($values instanceof ManyValuesProvider) {
-			return $values->getValues();
-		}
-
-		$mismatch = is_object($values) ? ('instance of ' . get_class($values)) : gettype($values);
-		throw new InvalidValueException(sprintf('Items must be a static array or an instance of ManyValuesProvider, %s given.', $mismatch));
+		return match (true) {
+			is_array($values) => $values,
+			$values instanceof ManyValuesProvider => $values->getValues(),
+			default => throw new InvalidValueException(sprintf(
+				'Items must be a static array or an instance of ManyValuesProvider, %s given.',
+				get_debug_type($values)
+			)),
+		};
 	}
 }
