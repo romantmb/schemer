@@ -13,6 +13,7 @@ use Schemer\Node;
 use Schemer\Validators\Inputs\NullableBooleanInput;
 use Schemer\Validators\Inputs\NullableNumericInput;
 use Schemer\Validators\Inputs\NullableTextualInput;
+use Schemer\Validators\Inputs\BooleanInput;
 use Schemer\Validators\Inputs\NumericInput;
 use Schemer\Validators\Inputs\TextualInput;
 use function Schemer\b; // bag
@@ -31,7 +32,9 @@ final class Inquiry
 				p('settings',
 					p('users',
 						p('maxCountOfQueries', NumericInput::class)
-							->default(1)
+							->default(1),
+						p('sendHello', BooleanInput::class)
+							->default(false)
 					)
 				),
 

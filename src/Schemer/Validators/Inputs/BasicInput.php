@@ -119,7 +119,7 @@ abstract class BasicInput implements Input
 		return match ($unmodified) {
 			true  => $this->value,
 			false => ($this->outputModifier ?? static fn($value) => $value)($this->value),
-		} ?: null;
+		};
 	}
 
 

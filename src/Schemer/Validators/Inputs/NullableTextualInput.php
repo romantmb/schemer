@@ -42,6 +42,12 @@ class NullableTextualInput extends BasicInput
 	}
 
 
+	public function getValue(bool $unmodified = false): ?string
+	{
+		return parent::getValue($unmodified) ?: null;
+	}
+
+
 	public function getIssue(): ?string
 	{
 		return ! $this->isValid()

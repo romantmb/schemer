@@ -39,7 +39,8 @@ test('dummy inquiry', function() {
     "inquiry": {
         "settings": {
             "users": {
-                "maxCountOfQueries": 3
+                "maxCountOfQueries": 3,
+                "sendHello": false
             }
         },
         "steps": []
@@ -60,7 +61,8 @@ JSON,
     "inquiry": {
         "settings": {
             "users": {
-                "maxCountOfQueries": 3
+                "maxCountOfQueries": 3,
+                "sendHello": false
             }
         },
         "steps": [
@@ -94,6 +96,8 @@ JSON,
 		$chooseOne?->get('prompt.options')->getPath()
 	);
 
+	$scheme->set('inquiry.settings.users.sendHello', true);
+
 	($optionA = $chooseOne
 		?->get('prompt.options', Options::class)
 		->pick('key=a'))
@@ -104,7 +108,8 @@ JSON,
     "inquiry": {
         "settings": {
             "users": {
-                "maxCountOfQueries": 3
+                "maxCountOfQueries": 3,
+                "sendHello": true
             }
         },
         "steps": [

@@ -59,6 +59,12 @@ class CustomInput extends BasicInput
 	}
 
 
+	public function getValue(bool $unmodified = false): mixed
+	{
+		return parent::getValue($unmodified) ?: null;
+	}
+
+
 	public function getIssue(): ?string
 	{
 		return ! $this->isValid()
