@@ -11,7 +11,6 @@ namespace Schemer;
 
 use Schemer\Validators\Input;
 use Schemer\Exceptions\InvalidValueException;
-use LogicException;
 
 
 /**
@@ -20,17 +19,13 @@ use LogicException;
 class Scheme
 {
 
-	public function __construct()
+	protected function __construct()
 	{
-		throw new LogicException('Scheme builder is a static class.');
 	}
 
 
 	/**
-	 * Object factory
-	 *
-	 * @param  NamedNode ...$nodes
-	 * @return Node
+	 * Bag factory
 	 */
 	public static function bag(...$nodes): Node
 	{
@@ -40,10 +35,6 @@ class Scheme
 
 	/**
 	 * Property factory
-	 *
-	 * @param  string $name
-	 * @param  mixed  $content
-	 * @return Property
 	 */
 	public static function prop(string $name, ...$content): Property
 	{
@@ -70,10 +61,6 @@ class Scheme
 
 	/**
 	 * Static options factory
-	 *
-	 * @param string $name
-	 * @param array  $content
-	 * @return Options
 	 */
 	public static function options(string $name, ...$content): Options
 	{
@@ -84,10 +71,6 @@ class Scheme
 
 	/**
 	 * Variable options factory
-	 *
-	 * @param string $name
-	 * @param array  $content
-	 * @return Options
 	 */
 	public static function candidates(string $name, ...$content): Options
 	{
@@ -97,8 +80,7 @@ class Scheme
 
 
 	/**
-	 * @param  mixed ...$content
-	 * @return Group
+	 * Group of sibling properties factory (unlike a bag, it is not represented by a named property)
 	 */
 	public static function group(...$content): Group
 	{
@@ -106,16 +88,9 @@ class Scheme
 	}
 
 
-	/**
-	 * @param  array     $children
-	 * @param  Node|null $bag
-	 * @return Node
-	 */
 	private static function fillBag(array $children, Node $bag = null): Node
 	{
-		if ($bag === null) {
-			$bag = new Node;
-		}
+		$bag ??= new Node;
 
 		foreach ($children as $node) {
 			$bag->add($node);
@@ -125,33 +100,18 @@ class Scheme
 	}
 
 
-	/**
-	 * @param  Property $property
-	 * @param  mixed    $value
-	 * @return Property
-	 */
-	private static function initializePropertyValue(Property $property, $value): Property
+	private static function initializePropertyValue(Property $property, mixed $value): Property
 	{
-		if (is_array($value)) {
-			return $property->setOptionalValues(new StaticArrayProvider($value));
-		}
-
-		if ($value instanceof ManyValuesProvider) {
-			return $property->setOptionalValues($value);
-		}
-
-		if ($value instanceof ValueProvider) {
-			return $property->setValue($value);
-		}
-
-		if (is_string($value) && class_exists($value)) {
-			return $property->setValue(new UserValueProvider($value));
-		}
-
-		if (is_scalar($value) || $value === null) {
-			return $property->setValue(new ScalarProvider($value));
-		}
-
-		throw new InvalidValueException(sprintf('Property value must be primitive or ValueProvider implementation or %s implementation class name.', Input::class));
+		return match (true) {
+			is_array($value)                          => $property->setOptionalValues(new StaticArrayProvider($value)),
+			$value instanceof ManyValuesProvider      => $property->setOptionalValues($value),
+			$value instanceof ValueProvider           => $property->setValue($value),
+			is_string($value) && class_exists($value) => $property->setValue(new UserValueProvider($value)),
+			is_scalar($value) || $value === null      => $property->setValue(new ScalarProvider($value)),
+			default => throw new InvalidValueException(sprintf(
+				'Property value must be primitive or ValueProvider implementation or %s implementation class name.',
+				Input::class
+			)),
+		};
 	}
 }

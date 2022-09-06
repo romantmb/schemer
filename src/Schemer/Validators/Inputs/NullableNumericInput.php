@@ -9,74 +9,43 @@ declare(strict_types=1);
 
 namespace Schemer\Validators\Inputs;
 
+use Schemer\Support\Helpers;
+
 
 /**
  * Nullable numeric (integer or float) user input validator
- *
- * @author Roman Pistek
  */
 class NullableNumericInput extends BasicInput
 {
 
-	/**
-	 * @param mixed       $value
-	 * @param string|null $name
-	 */
-	public function __construct($value, $name = null)
+	public function __construct(mixed $value, ?string $name = null)
 	{
-		if (is_string($value) && is_numeric($value)) {
-			$value = strpos($value, '.') !== false ? (float) $value : (int) $value;
-		}
-
-		parent::__construct($value, $name);
+		parent::__construct(Helpers::sanitizeValue($value), $name);
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isValid(): bool
+	public function isValid(): bool
 	{
 		return is_int($this->value) || is_float($this->value) || $this->isEmpty();
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isNullable(): bool
+	public function isNullable(): bool
 	{
 		return true;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isEmpty(): bool
+	public function isEmpty(): bool
 	{
 		return $this->isNull() || $this->value === 0 || $this->value === 0.0;
 	}
 
 
-	/**
-	 * @param  bool $unmodified if true, original input value is returned
-	 * @return mixed
-	 */
-	function getValue($unmodified = false)
+	public function getIssue(): ?string
 	{
-		return parent::getValue($unmodified);
-	}
-
-
-	/**
-	 * @return string|null
-	 */
-	function getIssue(): ?string
-	{
-		if (! $this->isValid()) {
-			return sprintf('must be numeric, %s given', gettype($this->value));
-		}
-		return null;
+		return ! $this->isValid()
+			? sprintf('must be numeric, %s given', gettype($this->value))
+			: null;
 	}
 }

@@ -358,11 +358,11 @@ final class SchemeForm
 
 		$finder($node);
 
-		dump(
-			collect($founds)
-				->mapWithKeys(fn(InputSpecification $spec) => [ $spec->getName() => $spec->getPath() ])
-				->all()
-		);
+//		dump(
+//			collect($founds)
+//				->mapWithKeys(fn(InputSpecification $spec) => [ $spec->getName() => $spec->getPath() ])
+//				->all()
+//		);
 
 		return $founds;
 	}

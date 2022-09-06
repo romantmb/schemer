@@ -12,62 +12,33 @@ namespace Schemer\Validators;
 
 /**
  * Interface of single user-input
- *
- * @author Roman Pistek
  */
 interface Input
 {
-	/**
-	 * @return bool
-	 */
-	function isValid(): bool;
+
+	public function isValid(): bool;
 
 
-	/**
-	 * @return bool
-	 */
-	function isUndefined(): bool;
+	public function isUndefined(): bool;
 
 
-	/**
-	 * @return bool
-	 */
-	function isNullable(): bool;
+	public function isNullable(): bool;
 
 
-	/**
-	 * @return bool
-	 */
-	function isNull(): bool;
+	public function isNull(): bool;
 
 
-	/**
-	 * @return bool
-	 */
-	function isEmpty(): bool;
+	public function isEmpty(): bool;
 
 
-	/**
-	 * @param  bool $unmodified if true, modify() callback is ignored
-	 * @return mixed
-	 */
-	function getValue($unmodified = false);
+	public function getValue(bool $unmodified = false);
 
 
-	/**
-	 * @return string|null
-	 */
-	function getName(): ?string;
+	public function getName(): ?string;
 
 
-	/**
-	 * @return string|null
-	 */
-	function getKey(): ?string;
+	public function getKey(): ?string;
 
 
-	/**
-	 * @return string
-	 */
-	function getIssue(): ?string;
+	public function getIssue(): ?string;
 }

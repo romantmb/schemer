@@ -19,23 +19,19 @@ use BadMethodCallException;
  */
 final class Group extends Node implements Iterator
 {
-	/** @var int */
-	private $position;
+	private int $position;
 
 	/** @var Property[] */
-	private $siblings = [];
+	private array $siblings = [];
 
 
-	/**
-	 * @param mixed ...$siblings
-	 */
 	public function __construct(...$siblings)
 	{
 		parent::__construct();
 
 		$this->position = 0;
 
-		if (is_array($siblings) && count($siblings) === 1) {
+		if (count($siblings) === 1 && is_array($siblings[0] ?? null)) {
 			$siblings = $siblings[0];
 		}
 
@@ -51,10 +47,6 @@ final class Group extends Node implements Iterator
 	}
 
 
-	/**
-	 * @param Node $child
-	 * @return Node
-	 */
 	public function add(Node $child): Node
 	{
 		throw new BadMethodCallException('Group members must be defined in constructor.');
@@ -63,7 +55,7 @@ final class Group extends Node implements Iterator
 
 	public function current(): ?Property
 	{
-		return @$this->siblings[$this->position];
+		return $this->siblings[$this->position] ?? null;
 	}
 
 
@@ -91,19 +83,12 @@ final class Group extends Node implements Iterator
 	}
 
 
-	/**
-	 * @return array
-	 */
 	public function toArray(): array
 	{
 		return $this->siblings;
 	}
 
 
-	/**
-	 * @param int $options
-	 * @return string
-	 */
 	public function toJson($options = 0): string
 	{
 		throw new BadMethodCallException('Cannot export scheme group into JSON.');

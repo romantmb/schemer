@@ -14,28 +14,19 @@ use Schemer\Validators\UserInputValidator;
 use Schemer\Exceptions\InvalidUserInputException;
 use Schemer\Exceptions\InvalidValueException;
 use InvalidArgumentException;
-use Exception;
+use Throwable;
 
 
 class UserValueProvider implements ValueProvider
 {
-	/** @var string */
-	private $validatorClass;
-
-	/** @var Property */
-	private $property;
+	private ?Property $property = null;
 
 
-	/**
-	 * @param string $validatorClass
-	 */
-	public function __construct(string $validatorClass)
+	public function __construct(private string $validatorClass)
 	{
 		if (! is_subclass_of($validatorClass, Input::class)) {
 			throw new InvalidArgumentException(sprintf('Validator must be an instance of %s, %s given.', Input::class, $validatorClass));
 		}
-
-		$this->validatorClass = $validatorClass;
 	}
 
 
@@ -49,17 +40,15 @@ class UserValueProvider implements ValueProvider
 
 
 	/**
-	 * @param $value
-	 * @return mixed
-	 * @throws Exception
+	 * @throws Throwable
 	 */
-	public function setValue($value)
+	public function setValue(mixed $value): UserInputValidator|string|int|array|bool|null
 	{
 		try {
 			return UserInputValidator::simple(
 				new $this->validatorClass(
 					$value,
-					$this->getProperty() !== null ? sprintf("'%s'", $this->getProperty()->getPath()) : null
+					$this->property !== null ? sprintf("'%s'", $this->property->getPath()) : null
 				)
 			);
 
@@ -69,41 +58,28 @@ class UserValueProvider implements ValueProvider
 	}
 
 
-	/**
-	 * @return mixed|null
-	 */
-	public function getValue()
+	public function getValue(): mixed
 	{
-		return $this->property->getRawValue();
+		return $this->property?->getRawValue();
 	}
 
 
 	/**
 	 * To be overloaded if necessary
-	 *
-	 * @return mixed|null
 	 */
-	public function getHumanValue()
+	public function getHumanValue(): mixed
 	{
 		return null;
 	}
 
 
-	/**
-	 * @param  Property $property
-	 * @return UserValueProvider
-	 */
-	public function setProperty(Property $property): ValueProvider
+	public function setProperty(Property $property): UserValueProvider
 	{
 		$this->property = $property;
-
 		return $this;
 	}
 
 
-	/**
-	 * @return Property|null
-	 */
 	public function getProperty(): ?Property
 	{
 		return $this->property;

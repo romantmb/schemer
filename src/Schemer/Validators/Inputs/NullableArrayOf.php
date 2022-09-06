@@ -14,40 +14,28 @@ use Schemer\Validators\Input;
 
 /**
  * Array of user inputs
- *
- * @author Roman Pistek
  */
 class NullableArrayOf implements Input
 {
 	/** @var Input[] */
-	protected $inputs = [];
+	protected array $inputs = [];
 
-	/** @var string */
-	protected $key;
+	protected ?string $key;
 
-	/** @var string */
-	protected $name;
+	protected ?string $name;
 
-	/** @var bool */
-	protected $undefined = true;
+	protected bool $undefined = true;
 
-	/** @var array|null */
-	protected $values;
+	protected ?array $values = null;
 
 
-	/**
-	 * @param Input $input
-	 */
 	public function __construct(Input $input)
 	{
 		$this->key = $input->getKey();
-
 		$this->name = $input->getName();
-
 		$this->undefined = $input->isUndefined();
 
-		$values = $input->getValue(true);
-		if (is_array($values)) {
+		if (is_array($values = $input->getValue(true))) {
 			$this->values = $values;
 			$cls = get_class($input);
 			foreach ($values as $value) {
@@ -57,10 +45,7 @@ class NullableArrayOf implements Input
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isValid(): bool
+	public function isValid(): bool
 	{
 		foreach ($this->inputs as $input) {
 			if (! $input->isValid()) {
@@ -71,47 +56,31 @@ class NullableArrayOf implements Input
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isUndefined(): bool
+	public function isUndefined(): bool
 	{
 		return $this->undefined;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isNullable(): bool
+	public function isNullable(): bool
 	{
 		return false;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isNull(): bool
+	public function isNull(): bool
 	{
 		return $this->values === null;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isEmpty(): bool
+	public function isEmpty(): bool
 	{
 		return ! $this->values;
 	}
 
 
-	/**
-	 * @param  bool $unmodified if true, modify() callback is ignored
-	 * @return mixed
-	 */
-	function getValue($unmodified = false)
+	public function getValue($unmodified = false): ?array
 	{
 		$set = [];
 		foreach ($this->inputs as $input) {
@@ -121,28 +90,19 @@ class NullableArrayOf implements Input
 	}
 
 
-	/**
-	 * @return string|null
-	 */
-	function getName(): ?string
+	public function getName(): ?string
 	{
 		return $this->name;
 	}
 
 
-	/**
-	 * @return string|null
-	 */
-	function getKey(): ?string
+	public function getKey(): ?string
 	{
 		return $this->key;
 	}
 
 
-	/**
-	 * @return string|null
-	 */
-	function getIssue(): ?string
+	public function getIssue(): ?string
 	{
 		foreach ($this->inputs as $index => $input) {
 			if (($issue = $input->getIssue()) !== null) {

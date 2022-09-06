@@ -12,56 +12,33 @@ namespace Schemer;
 
 final class ScalarProvider implements ValueProvider
 {
-	/** @var mixed */
-	private $value;
-
-	/** @var Property */
-	private $property;
+	private ?Property $property = null;
 
 
-	/**
-	 * @param mixed $value
-	 */
-	public function __construct($value)
+	public function __construct(private mixed $value)
 	{
-		$this->value = $value;
 	}
 
 
-	/**
-	 * @param mixed $value
-	 * @return mixed
-	 */
-	public function setValue($value)
+	public function setValue($value): mixed
 	{
 		return $this->value = $value;
 	}
 
 
-	/**
-	 * @return mixed|null
-	 */
-	public function getValue()
+	public function getValue(): mixed
 	{
 		return $this->value;
 	}
 
 
-	/**
-	 * @param  Property $property
-	 * @return ValueProvider
-	 */
-	public function setProperty(Property $property): ValueProvider
+	public function setProperty(Property $property): ScalarProvider
 	{
 		$this->property = $property;
-
 		return $this;
 	}
 
 
-	/**
-	 * @return Property|null
-	 */
 	public function getProperty(): ?Property
 	{
 		return $this->property;

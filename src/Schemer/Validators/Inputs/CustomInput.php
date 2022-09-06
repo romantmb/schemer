@@ -10,103 +10,59 @@ declare(strict_types=1);
 namespace Schemer\Validators\Inputs;
 
 use Schemer\Support\Strings;
-use InvalidArgumentException;
+use Closure;
 
 
 /**
  * User input validator with custom validation
- *
- * @author Roman Pistek
  */
 class CustomInput extends BasicInput
 {
-	/** @var callable */
-	protected $validator;
+	protected ?Closure $_validator = null;
 
 
-	/**
-	 * @param  mixed  $value
-	 * @param  string $name
-	 * @throws InvalidArgumentException
-	 */
-	public function __construct($value, $name = null)
+	public function __construct(mixed $value, ?string $name = null)
 	{
-		parent::__construct($value, $name);
-
-		if (is_string($this->value)) {
-			$this->value = Strings::trim($this->value);
-		}
+		parent::__construct(is_string($value) ? Strings::trim($value) : $value, $name);
 	}
 
 
-	/**
-	 * @param callable $validator
-	 * @return static
-	 */
-	public function validate(callable $validator)
+	public function validate(callable $validator): static
 	{
-		$this->validator = $validator;
-
+		$this->_validator = Closure::fromCallable($validator);
 		return $this;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	protected function validator()
+	protected function validator(): bool
 	{
 		// to be overloaded
 		return true;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isValid(): bool
+	public function isValid(): bool
 	{
-		return is_callable($cbValidator = $this->validator)
-			? $cbValidator($this->value) : $this->validator();
+		return isset($this->_validator) ? ($this->_validator)($this->value) : $this->validator();
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isNullable(): bool
+	public function isNullable(): bool
 	{
 		return true;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isEmpty(): bool
+	public function isEmpty(): bool
 	{
 		return $this->isNull() || $this->value === '';
 	}
 
 
-	/**
-	 * @param  bool $unmodified if true, original input value is returned
-	 * @return mixed
-	 */
-	function getValue($unmodified = false)
+	public function getIssue(): ?string
 	{
-		return parent::getValue($unmodified) ?: null;
-	}
-
-
-	/**
-	 * @return string|null
-	 */
-	function getIssue(): ?string
-	{
-		if (! $this->isValid()) {
-			return sprintf("value ('%s') is not valid", $this->value);
-		}
-		return null;
+		return ! $this->isValid()
+			? sprintf("value ('%s') is not valid", $this->value)
+			: null;
 	}
 }

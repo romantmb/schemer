@@ -15,14 +15,9 @@ namespace Schemer;
  */
 interface NamedNode
 {
-	/**
-	 * @return string
-	 */
+
 	public function getName(): string;
 
 
-	/**
-	 * @return string
-	 */
 	public function getPath(): string;
 }

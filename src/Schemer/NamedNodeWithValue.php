@@ -15,15 +15,9 @@ namespace Schemer;
  */
 interface NamedNodeWithValue extends NamedNode
 {
-	/**
-	 * @return mixed|null
-	 */
-	public function getValue();
+
+	public function getValue(): mixed;
 
 
-	/**
-	 * @param  mixed $value
-	 * @return NamedNodeWithValue
-	 */
-	public function setValue($value): NamedNodeWithValue;
+	public function setValue(mixed $value): NamedNodeWithValue;
 }

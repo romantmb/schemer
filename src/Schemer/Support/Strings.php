@@ -9,23 +9,16 @@ declare(strict_types=1);
 
 namespace Schemer\Support;
 
-use Nette\Utils\Strings as NetteStrings;
-use Nette\InvalidStateException;
 
-
-class Strings extends NetteStrings
+class Strings extends \Nette\Utils\Strings
 {
 
 	/**
-	 * Converts snake_case to camelCase (e.g. 'hello_world' -> 'helloWorld')
-	 *
-	 * @param string $str
-	 * @param string $sep
-	 * @return string
+	 * Converts snake_case to camelCase (i.e. 'hello_world' -> 'helloWorld')
 	 */
 	public static function toCamelCase(string $str, string $sep = '_'): string
 	{
-		if (strpos($str, $sep) === false) {
+		if (! str_contains($str, $sep)) {
 			return $str;
 		}
 
@@ -40,17 +33,12 @@ class Strings extends NetteStrings
 
 
 	/**
-	 * Converts camelCase to snake_case (e.g. 'helloWorld' -> 'hello_world')
-	 *
-	 * @param string $str
-	 * @param string $sep
-	 * @return string
-	 * @throws InvalidStateException
+	 * Converts camelCase to snake_case (i.e. 'helloWorld' -> 'hello_world')
 	 */
 	public static function toSnakeCase(string $str, string $sep = '_'): string
 	{
 		return parent::lower(
-			parent::replace($str, '~(\w)([A-Z])~', sprintf('\\1%s\\2', $sep))
+			parent::replace($str, '~(?<!^)[A-Z]~', sprintf('%s\\0', $sep))
 		);
 	}
 }

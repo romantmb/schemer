@@ -12,46 +12,35 @@ namespace Schemer\Validators\Inputs;
 use Schemer\Validators\Input;
 use Schemer\Support\Strings;
 use Schemer\Exceptions\InvalidUserInputException;
-use Nette\Utils\Callback;
-use Nette\InvalidArgumentException;
+use Closure;
 
 
 /**
  * Basic user input validator
- *
- * @author Roman Pistek
  */
 abstract class BasicInput implements Input
 {
-	/** @var mixed */
-	protected $value;
+	protected ?string $key = null;
 
-	/** @var string */
-	protected $name;
+	protected bool $undefined = false;
 
-	/** @var string */
-	protected $key;
-
-	/** @var bool */
-	protected $undefined = false;
-
-	/** @var callable */
-	protected $outputModifier;
+	protected ?Closure $outputModifier = null;
 
 
 	/**
-	 * @param mixed  $value to be validated
-	 * @param string $name of input, e.g. 'title' (optional)
+	 * @param  mixed       $value to be validated
+	 * @param  string|null $name  of input, e.g. 'title' (optional)
 	 */
-	public function __construct($value, $name = null)
+	public function __construct(protected mixed $value, protected ?string $name = null)
 	{
+		$this->name = (string) $name ?: null;
+
 		if (is_array($value) && count($value) === 2
 			&& ($def = array_values($value)) && is_array($def[0]) && is_string($def[1])) {
 
-			list($data, $key) = $value;
+			[ $data, $key ] = $value;
 
 			// check all typo variants (original, snake-cased, camel-cased)
-			$keyVariant = null;
 			foreach ([ $key, Strings::toCamelCase($key), Strings::toSnakeCase($key) ] as $keyVariant) {
 				if (array_key_exists($keyVariant, $data)) {
 					$this->key = $key;
@@ -64,130 +53,89 @@ abstract class BasicInput implements Input
 				$this->undefined = true;
 			}
 
-			$value = @$data[$keyVariant];
+			$this->value = $data[$keyVariant ?? null] ?? null;
 		}
 
-		if ($value !== null && ! is_scalar($value) && ! is_array($value)) {
+		if ($this->value !== null && ! is_scalar($this->value) && ! is_array($this->value)) {
 			throw new InvalidUserInputException(sprintf('Supported types of value are nulls, scalars and arrays of scalars, %s given.', gettype($value)));
 		}
-
-		$this->value = $value;
-		$this->name = (string) $name ?: null;
 	}
 
 
 	/**
 	 * Modifies value on output
-	 *
-	 * @param  mixed $callback callable or Nette\Utils\Strings filter name
-	 * @return static
-	 * @throws InvalidArgumentException
 	 */
-	public function modify($callback)
+	public function modify(callable|string $callback): static
 	{
 		if (is_string($callback)) {
-			$args = array_slice(func_get_args(), 1);
-			$callback = static function($value) use ($callback, $args) {
-				$func = [ 'Nette\Utils\Strings', $callback ];
-				Callback::check($func);
-				return call_user_func_array($func, array_merge([ $value ], $args));
-			};
+			$callback = static fn($value) => call_user_func(
+				[ Strings::class, $callback], $value, ...array_slice(func_get_args(), 1)
+			);
 		}
-		Callback::check($callback);
-		$this->outputModifier = $callback;
+		$this->outputModifier = Closure::fromCallable($callback);
 		return $this;
 	}
 
 
-	/**
-	 * @param  string $key
-	 * @return static
-	 */
-	public function setKey($key)
+	public function setKey(string|int|null $key): static
 	{
-		$this->key = (string) $key;
+		$this->key = (string) $key ?: null;
 		return $this;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isValid(): bool
+	public function isValid(): bool
 	{
 		return ! $this->isUndefined();
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isUndefined(): bool
+	public function isUndefined(): bool
 	{
 		return $this->undefined;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isNullable(): bool
+	public function isNullable(): bool
 	{
 		return false;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isNull(): bool
+	public function isNull(): bool
 	{
 		return $this->value === null;
 	}
 
 
-	/**
-	 * @return bool
-	 */
-	function isEmpty(): bool
+	public function isEmpty(): bool
 	{
 		return ! $this->value || $this->isUndefined();
 	}
 
 
-	/**
-	 * @param  bool $unmodified if true, original input value is returned
-	 * @return mixed
-	 */
-	function getValue($unmodified = false)
+	public function getValue(bool $unmodified = false): mixed
 	{
-		$modifier = $this->outputModifier ?: static function($value) { return $value; };
-		return $unmodified ? $this->value : $modifier($this->value);
+		return match ($unmodified) {
+			true  => $this->value,
+			false => ($this->outputModifier ?? static fn($value) => $value)($this->value),
+		} ?: null;
 	}
 
 
-	/**
-	 * @return string|null
-	 */
-	function getName(): ?string
+	public function getName(): ?string
 	{
 		return $this->name;
 	}
 
 
-	/**
-	 * @return string|null
-	 */
-	function getKey(): ?string
+	public function getKey(): ?string
 	{
-		return $this->key ?: null;
+		return $this->key;
 	}
 
 
-	/**
-	 * @return string|null
-	 */
-	function getIssue(): ?string
+	public function getIssue(): ?string
 	{
 		return null;
 	}

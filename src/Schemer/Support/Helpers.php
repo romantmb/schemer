@@ -15,11 +15,8 @@ class Helpers
 
 	/**
 	 * Exports value (as well as array of values) into string representation
-	 *
-	 * @param mixed $value
-	 * @return string
 	 */
-	public static function export($value): string
+	public static function export(mixed $value): string
 	{
 		if (is_array($value)) {
 			return implode(', ', array_map(static function($val) {
@@ -33,11 +30,7 @@ class Helpers
 	}
 
 
-	/**
-	 * @param mixed $value
-	 * @return mixed
-	 */
-	public static function sanitizeValue($value)
+	public static function sanitizeValue(mixed $value): mixed
 	{
 		if (is_array($value)) {
 			return collect($value)
@@ -52,7 +45,7 @@ class Helpers
 		}
 
 		if (is_numeric($value)) {
-			return strpos($value, '.') ? (float) $value : (int) $value;
+			return str_contains($value, '.') ? (float) $value : (int) $value;
 		}
 
 		if ($value === 'null' || $value === '') {
