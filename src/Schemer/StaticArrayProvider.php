@@ -16,32 +16,18 @@ use Nette\Utils\Arrays;
 
 class StaticArrayProvider implements ManyValuesProvider
 {
-	/** @var array */
-	private $values;
-
-	/** @var Property */
-	private $property;
+	private ?Property $property = null;
 
 
-	/**
-	 * @param array $optionalValues
-	 */
-	public function __construct(array $optionalValues)
+	public function __construct(private array $values)
 	{
-		if (Arrays::isList($optionalValues)) {
-			$optionalValues = array_combine($optionalValues, $optionalValues);
+		if (Arrays::isList($values)) {
+			$this->values = array_combine($values, $values);
 		}
-
-		$this->values = $optionalValues;
 	}
 
 
-	/**
-	 * @param mixed $value
-	 * @return mixed
-	 * @throws InvalidValueException
-	 */
-	public function setValue($value)
+	public function setValue(mixed $value): mixed
 	{
 		if ($value !== null && ! in_array($value = Helpers::sanitizeValue($value), $this->getValues(), true)) {
 			throw new InvalidValueException(sprintf(
@@ -56,57 +42,37 @@ class StaticArrayProvider implements ManyValuesProvider
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function preserveKeys(): bool
 	{
 		return false;
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function multipleValues(): bool
 	{
 		return false;
 	}
 
 
-	/**
-	 * @return array
-	 */
 	public function getValues(): array
 	{
 		return $this->values;
 	}
 
 
-	/**
-	 * @return mixed|null
-	 */
-	public function getValue()
+	public function getValue(): mixed
 	{
 		return $this->property->getValue();
 	}
 
 
-	/**
-	 * @param  Property $property
-	 * @return StaticArrayProvider
-	 */
-	public function setProperty(Property $property): ValueProvider
+	public function setProperty(Property $property): StaticArrayProvider
 	{
 		$this->property = $property;
-
 		return $this;
 	}
 
 
-	/**
-	 * @return Property|null
-	 */
 	public function getProperty(): ?Property
 	{
 		return $this->property;

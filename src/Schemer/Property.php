@@ -18,109 +18,68 @@ use BadMethodCallException;
 
 final class Property extends Node implements NamedNodeWithValue
 {
-	/** @var string */
-	private $name;
+	private ?ManyValuesProvider $optionalValuesProvider = null;
 
-	/** @var ManyValuesProvider */
-	private $optionalValuesProvider;
+	private ?ValueProvider $valueProvider = null;
 
-	/** @var ValueProvider */
-	private $valueProvider;
+	private mixed $value = null;
 
-	/** @var mixed|null */
-	private $value;
+	private mixed $defaultValue = null;
 
-	/** @var mixed */
-	private $defaultValue;
+	private array $conditionalSiblings = [];
 
-	/** @var Node[] */
-	private $conditionalSiblings = [];
-
-	/** @var bool */
-	private $isUniqueKey = false;
+	private bool $isUniqueKey = false;
 
 
-	/**
-	 * @param string    $name
-	 * @param Node|null $parent
-	 * @throws InvalidNodeException
-	 */
-	public function __construct(string $name, Node $parent = null)
+	public function __construct(private string $name, ?Node $parent = null)
 	{
-		parent::__construct($parent);
-
 		if (! $name) {
 			throw new InvalidNodeException('Property name must be defined.');
 		}
 
-		$this->name = $name;
+		parent::__construct($parent);
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getName(): string
 	{
 		return $this->name;
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isBag(): bool
 	{
 		return ! empty($this->children);
 	}
 
 
-	/**
-	 * @return static
-	 */
 	public function uniqueKey(): Property
 	{
 		$this->isUniqueKey = true;
-
 		return $this;
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function isUniqueKey(): bool
 	{
 		return $this->isUniqueKey;
 	}
 
 
-	/**
-	 * @param  ManyValuesProvider $provider
-	 * @return self
-	 */
 	public function setOptionalValues(ManyValuesProvider $provider): self
 	{
 		$this->optionalValuesProvider = $provider->setProperty($this);
-
 		return $this;
 	}
 
 
-	/**
-	 * @return array
-	 */
 	public function getOptionalValues(): array
 	{
-		return $this->optionalValuesProvider ? $this->optionalValuesProvider->getValues() : [];
+		return $this->optionalValuesProvider?->getValues() ?? [];
 	}
 
 
-	/**
-	 * @param  mixed|null $value
-	 * @return Property
-	 */
-	public function setValue($value): NamedNodeWithValue
+	public function setValue(mixed $value): self
 	{
 		if ($this->isBag()) {
 			throw new BadMethodCallException('Cannot set value of bag property.');
@@ -145,34 +104,23 @@ final class Property extends Node implements NamedNodeWithValue
 	}
 
 
-	/**
-	 * @param mixed $value
-	 * @return static
-	 */
-	public function setDefaultValue($value): self
+	public function setDefaultValue(mixed $value): self
 	{
 		$this->defaultValue = $value;
-
 		return $this;
 	}
 
 
 	/**
 	 * Shortcut of setDefaultValue()
-	 *
-	 * @param mixed $value
-	 * @return static
 	 */
-	public function default($value): self
+	public function default(mixed $value): self
 	{
 		return $this->setDefaultValue($value);
 	}
 
 
-	/**
-	 * @return mixed|null
-	 */
-	public function getValue()
+	public function getValue(): mixed
 	{
 		if ($this->isBag()) {
 			return null;
@@ -186,40 +134,28 @@ final class Property extends Node implements NamedNodeWithValue
 	}
 
 
-	/**
-	 * @return ValueProvider|null
-	 */
 	public function getValueProvider(): ?ValueProvider
 	{
-		return $this->optionalValuesProvider ?: $this->valueProvider;
+		return $this->optionalValuesProvider ?? $this->valueProvider;
 	}
 
 
 	/**
 	 * Defines conditional siblings for specific property value
-	 *
-	 * @param mixed $value
-	 * @param Node  $node
-	 * @return Property
-	 * @throws InvalidNodeException
 	 */
-	public function on($value, Node $node): Property
+	public function on(mixed $value, Node $node): self
 	{
-		$key = self::getConditionalKey($value);
-
-		if (array_key_exists($key, $this->conditionalSiblings)) {
-			throw new InvalidNodeException(sprintf("Conditional %s for value %s already defined.", $node instanceof Group ? 'sibling' : 'siblings', Helpers::export($value)));
+		if (array_key_exists($key = self::getConditionalKey($value), $this->conditionalSiblings)) {
+			throw new InvalidNodeException(sprintf(
+				"Conditional %s for value %s already defined.",
+				$node instanceof Group ? 'sibling' : 'siblings', Helpers::export($value)));
 		}
 
 		$this->conditionalSiblings[$key] = $node;
-
 		return $this;
 	}
 
 
-	/**
-	 * @return bool
-	 */
 	public function hasAnyConditionalSiblings(): bool
 	{
 		return ! empty($this->conditionalSiblings);
@@ -227,8 +163,7 @@ final class Property extends Node implements NamedNodeWithValue
 
 
 	/**
-	 * @return Node[]
-	 * @throws UndeterminedPropertyException
+	 * @return array<Node>
 	 */
 	public function getSiblings(): array
 	{
@@ -260,11 +195,6 @@ final class Property extends Node implements NamedNodeWithValue
 	}
 
 
-	/**
-	 * @param string $name
-	 * @return Property|null
-	 * @throws UndeterminedPropertyException
-	 */
 	public function getSibling(string $name): ?Property
 	{
 		foreach ($this->getSiblings() as $sibling) {
@@ -272,14 +202,10 @@ final class Property extends Node implements NamedNodeWithValue
 				return $sibling;
 			}
 		}
-
 		return null;
 	}
 
 
-	/**
-	 * @return Options|null
-	 */
 	public function isInOptions(): ?Options
 	{
 		return ($wrapper = $this->getParent())
@@ -288,9 +214,6 @@ final class Property extends Node implements NamedNodeWithValue
 	}
 
 
-	/**
-	 * @return string
-	 */
 	public function getPath(): string
 	{
 		$path = parent::getPath();
@@ -315,7 +238,7 @@ final class Property extends Node implements NamedNodeWithValue
 
 
 	/**
-	 * @return Node[]
+	 * @return array<Node>
 	 */
 	public function getUndeterminedSiblings(): array
 	{
@@ -323,25 +246,16 @@ final class Property extends Node implements NamedNodeWithValue
 	}
 
 
-	/**
-	 * @param int $options
-	 * @return string
-	 */
 	public function toJson($options = 0): string
 	{
-		if (! $this->isBag()) {
-			return $this->getValue();
-		}
-
-		return parent::toJson($options);
+		return ! $this->isBag() ? $this->getValue() : parent::toJson($options);
 	}
 
 
 	/**
 	 * @internal
-	 * @return mixed|null
 	 */
-	public function getRawValue()
+	public function getRawValue(): mixed
 	{
 		return $this->value;
 	}
@@ -366,16 +280,10 @@ final class Property extends Node implements NamedNodeWithValue
 	}
 
 
-	/**
-	 * @param mixed $value
-	 * @return string
-	 */
-	private static function getConditionalKey($value): string
+	private static function getConditionalKey(mixed $value): string
 	{
-		if (! is_scalar($value)) {
-			throw new InvalidValueException(sprintf('Conditional value must be scalar, %s given.'. gettype($value)));
-		}
-
-		return trim(Helpers::export($value), '\'"');
+		return is_scalar($value)
+			? trim(Helpers::export($value), '\'"')
+			: throw new InvalidValueException(sprintf('Conditional value must be scalar, %s given.', gettype($value)));
 	}
 }
