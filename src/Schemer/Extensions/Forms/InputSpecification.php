@@ -53,7 +53,7 @@ class InputSpecification
 					? 'switch'
 					: 'text',
 			default => throw new InvalidNodeException(sprintf(
-				'Array with options or an UserValueProvider expected, %s given.', var_export($property->getValueProvider(), true)))
+				'Array with options or an UserValueProvider expected, %s given.', $property->getValueProvider()::class))
 		});
 	}
 

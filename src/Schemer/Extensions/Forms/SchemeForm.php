@@ -11,10 +11,12 @@ namespace Schemer\Extensions\Forms;
 
 use Schemer\Exceptions\ItemNotFoundException;
 use Schemer\Extensions\Transformers\HumanReadableSlugTransformer;
+use Schemer\NamedNode;
 use Schemer\Node;
 use Schemer\Options;
 use Schemer\Property;
 use Schemer\StaticArrayProvider;
+use Schemer\Traverser;
 use Schemer\UserValueProvider;
 use Schemer\ValueProvider;
 use Schemer\Exceptions\SchemerException;
@@ -243,6 +245,10 @@ final class SchemeForm
 
 	public function collect(): InputCollection
 	{
+		dumpe(
+			$this->dig($this->scheme)->all()
+		);
+
 		return $this->collection ??= $this->dig($this->scheme)
 			->filter($this->evalFilters())
 			->mapWithKeys(fn(InputSpecification $spec) => [ $spec->getInputName() => $spec ]);
@@ -306,64 +312,80 @@ final class SchemeForm
 
 	private function dig(Node $node): InputCollection
 	{
-		$founds = new InputCollection;
+//		Traverser::collect($node)->each(fn(Node $n) => dump([
+//			'name' => $n instanceof NamedNode ? $n->getName() : '*',
+//			'path' => $n->getPath(),
+//			'valueProvider' => $n instanceof Property && ($provider = $n->getValueProvider()) ? $provider::class : null,
+//			'editable' => self::isPropertyEditable($n),
+//		]));
+//		exit;
 
-		$finder = function(Node $node) use ($founds, & $finder) {
+		return new InputCollection(
+			Traverser::collect($node)
+				->filter(fn(Node $n) => self::isPropertyEditable($n))
+				->map(fn(Property $p) => (static fn(InputSpecification $spec) =>
+					$spec->setPropertyWithUniqueKey($p->isInOptions()?->getUniqueKeyProperty()))(new InputSpecification($p, $this))
+				)
+		);
 
-			if (empty($children = $node->getChildren())) {
 
-				if ($node instanceof Options) {
+//		$finder = function(Node $node) use ($founds, & $finder) {
+//
+//			if (empty($children = $node->getChildren())) {
+//
+//				if ($node instanceof Options) {
+//
+//					/** @var Property $candidateUniqueKeyProperty */
+//					$candidateUniqueKeyProperty = null;
+//
+//					foreach ($node->getCandidates() as /*$name =>*/ $valueProvider) {
+//						/** @var ValueProvider $valueProvider */
+//
+//						$property = $valueProvider->getProperty();
+//
+//						$founds->push(
+//							(new InputSpecification($property, $this))
+//								->setPropertyWithUniqueKey($candidateUniqueKeyProperty)
+//						);
+//
+//						if ($property?->isUniqueKey()) {
+//							$candidateUniqueKeyProperty = $property;
+//						}
+//					}
+//
+//					foreach ($node->getItems() as $picked) {
+//
+//						if ($picked instanceof Node) {
+//							$finder($picked);
+//						}
+//					}
+//
+//				} elseif ($node instanceof Property) {
+//
+//					if (($provider = $node->getValueProvider()) instanceof UserValueProvider
+//						|| $provider instanceof StaticArrayProvider) {
+//
+//						$founds->push(new InputSpecification($node, $this));
+//					}
+//				}
+//
+//				return;
+//			}
+//
+//			foreach ($children as $child) {
+//				$finder($child);
+//			}
+//		};
+//
+//		$finder($node);
+//
+//		return $founds;
+	}
 
-					/** @var Property $candidateUniqueKeyProperty */
-					$candidateUniqueKeyProperty = null;
 
-					foreach ($node->getCandidates() as /*$name =>*/ $valueProvider) {
-						/** @var ValueProvider $valueProvider */
-
-						$property = $valueProvider->getProperty();
-
-						$founds->push(
-							(new InputSpecification($property, $this))
-								->setPropertyWithUniqueKey($candidateUniqueKeyProperty)
-						);
-
-						if ($property?->isUniqueKey()) {
-							$candidateUniqueKeyProperty = $property;
-						}
-					}
-
-					foreach ($node->getItems() as $picked) {
-
-						if ($picked instanceof Node) {
-							$finder($picked);
-						}
-					}
-
-				} elseif ($node instanceof Property) {
-
-					if (($provider = $node->getValueProvider()) instanceof UserValueProvider
-						|| $provider instanceof StaticArrayProvider) {
-
-						$founds->push(new InputSpecification($node, $this));
-					}
-				}
-
-				return;
-			}
-
-			foreach ($children as $child) {
-				$finder($child);
-			}
-		};
-
-		$finder($node);
-
-//		dump(
-//			collect($founds)
-//				->mapWithKeys(fn(InputSpecification $spec) => [ $spec->getName() => $spec->getPath() ])
-//				->all()
-//		);
-
-		return $founds;
+	private static function isPropertyEditable(Node $node): bool
+	{
+		return $node instanceof Property
+			&& $node->getValueProvider() instanceof ValueProvider;
 	}
 }

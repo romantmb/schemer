@@ -190,7 +190,7 @@ JSON,
 		$restoredScheme->get('inquiry.steps[type=chooseOne].prompt.options[key=a].correct')->getPath()
 	);
 
-	foreach (Traverser::run($restoredScheme) as $level => $node) {
+	foreach (Traverser::start($restoredScheme) as $level => $node) {
 		printf(
 			"%'-{$level}s %s (%s): %s\n", '-',
 			$node instanceof NamedNode ? $node->getName() : '*',

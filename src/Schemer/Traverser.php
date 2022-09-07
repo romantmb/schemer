@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Schemer;
 
+use Illuminate\Support\Collection;
 use Generator;
 
 
@@ -20,7 +21,13 @@ final class Traverser
 	}
 
 
-	public static function run(Node $node): Generator
+	public static function collect(Node $node): Collection
+	{
+		return collect(self::start($node));
+	}
+
+
+	public static function start(Node $node): Generator
 	{
 		return (new self($node))
 			->traverse();
@@ -58,10 +65,21 @@ final class Traverser
 
 	private function optionCandidates(Options $options): Generator
 	{
-		foreach ($options->getCandidates() as $candidate) {
+		foreach ($options->getCandidates(sortByPriority: false) as $candidate) {
 			if ($candidate instanceof ValueProvider && $property = $candidate->getProperty()) {
-				yield $property;
+				yield $this->orphanInOptions(orphan: $property, adopter: $options);
 			}
 		}
+	}
+
+
+	private function orphanInOptions(Property $orphan, Options $adopter): Property
+	{
+		(match (true) {
+			$orphan->getParent() instanceof Options => $orphan,
+			($bag = $orphan->getParent())?->getParent() instanceof Options => $bag,
+			default => null,
+		})?->setParent($adopter);
+		return $orphan;
 	}
 }
