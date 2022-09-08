@@ -13,6 +13,7 @@ namespace Schemer\Tests;
 
 use Schemer\NamedNode;
 use Schemer\Options;
+use Schemer\Property;
 use Schemer\Tests\schemes\Inquiry;
 use Schemer\Exceptions\ItemNotFoundException;
 use Schemer\Traverser;
@@ -192,10 +193,8 @@ JSON,
 
 	foreach (Traverser::start($restoredScheme) as $level => $node) {
 		printf(
-			"%'-{$level}s %s (%s): %s\n", '-',
-			$node instanceof NamedNode ? $node->getName() : '*',
+			"%'-{$level}s%s (%s)\n", '', ($node instanceof Property ? $node->getPath() : '*'),
 			$node::class,
-			$node->getPath(),
 		);
 	}
 });

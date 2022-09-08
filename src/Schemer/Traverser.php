@@ -67,7 +67,7 @@ final class Traverser
 	{
 		foreach ($options->getCandidates(sortByPriority: false) as $candidate) {
 			if ($candidate instanceof ValueProvider && $property = $candidate->getProperty()) {
-				yield $this->orphanInOptions(orphan: $property, adopter: $options);
+				yield $this->level => $this->orphanInOptions(orphan: $property, adopter: $options);
 			}
 		}
 	}
@@ -79,7 +79,9 @@ final class Traverser
 			$orphan->getParent() instanceof Options => $orphan,
 			($bag = $orphan->getParent())?->getParent() instanceof Options => $bag,
 			default => null,
-		})?->setParent($adopter);
+		})
+			?->setParent($adopter);
+
 		return $orphan;
 	}
 }

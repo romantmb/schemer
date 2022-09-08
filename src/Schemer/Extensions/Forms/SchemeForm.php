@@ -245,9 +245,9 @@ final class SchemeForm
 
 	public function collect(): InputCollection
 	{
-		dumpe(
-			$this->dig($this->scheme)->all()
-		);
+//		dumpe(
+//			$this->dig($this->scheme)->all()
+//		);
 
 		return $this->collection ??= $this->dig($this->scheme)
 			->filter($this->evalFilters())
@@ -386,6 +386,6 @@ final class SchemeForm
 	private static function isPropertyEditable(Node $node): bool
 	{
 		return $node instanceof Property
-			&& $node->getValueProvider() instanceof ValueProvider;
+			&& $node->getValueProvider() instanceof UserValueProvider;
 	}
 }

@@ -225,12 +225,18 @@ final class Property extends Node implements NamedNodeWithValue
 			/**
 			 * 'options.someProperty' -> 'options[uniqueProp=*].someProperty'
 			 */
-			$path = substr_replace(
-				$path,
-				! $this->isUniqueKey() ? sprintf('[%s=*]', $uniqueKeyProperty->getName()) : '',
-				strpos($path, '.' . $this->getName()),
-				$this->isUniqueKey() ? (strlen($this->getName()) + 1) : 0
-			);
+
+			$wildcard = //$this->isUniqueKey() ? '' :
+				sprintf('[%s=*]', $uniqueKeyProperty->getName());
+
+			$path = str_replace($op = $options->getPath(), "$op$wildcard", $path);
+
+//			$path = substr_replace(
+//				$path,
+//				! $this->isUniqueKey() ? sprintf('[%s=*]', $uniqueKeyProperty->getName()) : '',
+//				strpos($path, '.' . $this->getName()),
+//				$this->isUniqueKey() ? (strlen($this->getName()) + 1) : 0
+//			);
 		}
 
 		return $path;
