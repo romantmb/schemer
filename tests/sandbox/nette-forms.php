@@ -31,7 +31,8 @@ $form = $schemeFormFactory
 	->create($scheme, new Form, function(Form $form) {
 		$form->addSubmit('update', 'Update');
 	})
-	//->notGroupedOnly()
+//	->notGroupedOnly()
+//	->filter(fn(InputSpecification $spec) => $spec->getGroup() === 'type=chooseOne' && $spec->getName() !== 'type')
 	->modify('maxCountOfQueries', fn(InputSpecification $spec) => $spec->setAsDisabled())
 	->onSubmit(function(SchemeForm $form) {
 		$form->updateScheme();

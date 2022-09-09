@@ -216,30 +216,18 @@ final class Property extends Node implements NamedNodeWithValue
 
 	public function getPath(): string
 	{
-		$path = parent::getPath();
+		if (($options = $this->isInOptions()) && ($uniqueKeyProperty = $options->getUniqueKeyProperty())
+			&& ! $this->isUniqueKey() && ($parent = $this->getParent()) && $parent->getKey() === null) {
 
-		if (($options = $this->isInOptions())
-			&& ($uniqueKeyProperty = $options->getUniqueKeyProperty())
-			&& ($parent = $this->getParent()) && $parent->getKey() === null) {
-
-			/**
-			 * 'options.someProperty' -> 'options[uniqueProp=*].someProperty'
-			 */
-
-			$wildcard = //$this->isUniqueKey() ? '' :
-				sprintf('[%s=*]', $uniqueKeyProperty->getName());
-
-			$path = str_replace($op = $options->getPath(), "$op$wildcard", $path);
-
-//			$path = substr_replace(
-//				$path,
-//				! $this->isUniqueKey() ? sprintf('[%s=*]', $uniqueKeyProperty->getName()) : '',
-//				strpos($path, '.' . $this->getName()),
-//				$this->isUniqueKey() ? (strlen($this->getName()) + 1) : 0
-//			);
+			// 'options.someProperty' -> 'options[uniqueProp=*].someProperty'
+			return str_replace(
+				$_ = $options->getPath(),
+				$_ . sprintf('[%s=*]', $uniqueKeyProperty->getName()),
+				parent::getPath()
+			);
 		}
 
-		return $path;
+		return parent::getPath();
 	}
 
 

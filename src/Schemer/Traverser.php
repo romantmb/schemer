@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace Schemer;
 
-use Illuminate\Support\Collection;
 use Generator;
 
 
@@ -18,12 +17,6 @@ final class Traverser
 
 	private function __construct(private Node $node, private int $level = 1)
 	{
-	}
-
-
-	public static function collect(Node $node): Collection
-	{
-		return collect(self::start($node));
 	}
 
 
@@ -67,13 +60,13 @@ final class Traverser
 	{
 		foreach ($options->getCandidates(sortByPriority: false) as $candidate) {
 			if ($candidate instanceof ValueProvider && $property = $candidate->getProperty()) {
-				yield $this->level => $this->orphanInOptions(orphan: $property, adopter: $options);
+				yield $this->level => $this->adopt(orphan: $property, adopter: $options);
 			}
 		}
 	}
 
 
-	private function orphanInOptions(Property $orphan, Options $adopter): Property
+	private function adopt(Property $orphan, Options $adopter): Property
 	{
 		(match (true) {
 			$orphan->getParent() instanceof Options => $orphan,

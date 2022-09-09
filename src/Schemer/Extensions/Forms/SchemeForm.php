@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Schemer\Extensions\Forms;
 
+use Nette\Utils\Strings;
 use Schemer\Exceptions\ItemNotFoundException;
 use Schemer\Extensions\Transformers\HumanReadableSlugTransformer;
 use Schemer\NamedNode;
@@ -168,9 +169,13 @@ final class SchemeForm
 //
 //				$this->validation($scheme, $spec, $value);
 
-				if ((! is_string($value) || ! str_contains($value, '='))
-					&& $spec->getProperty()->isUniqueKey()) {
-					$value = sprintf('%s=%s', $spec->getName(), is_array($value) ? implode(',', $value) : $value);
+				if ($spec->getProperty()->isUniqueKey()) {
+					if (! is_string($value) || ! str_contains($value, '=')) {
+						$value = sprintf('%s=%s', $spec->getName(), is_array($value) ? implode(',', $value) : $value);
+					}
+					if (str_ends_with($path, $_ = ".{$spec->getName()}")) {
+						$path = substr($path, 0, -strlen($_));
+					}
 				}
 
 				if (($key = $scheme->set($path, $value)->getKey()) !== null) {
@@ -245,10 +250,6 @@ final class SchemeForm
 
 	public function collect(): InputCollection
 	{
-//		dumpe(
-//			$this->dig($this->scheme)->all()
-//		);
-
 		return $this->collection ??= $this->dig($this->scheme)
 			->filter($this->evalFilters())
 			->mapWithKeys(fn(InputSpecification $spec) => [ $spec->getInputName() => $spec ]);
@@ -312,80 +313,26 @@ final class SchemeForm
 
 	private function dig(Node $node): InputCollection
 	{
-//		Traverser::collect($node)->each(fn(Node $n) => dump([
-//			'name' => $n instanceof NamedNode ? $n->getName() : '*',
-//			'path' => $n->getPath(),
-//			'valueProvider' => $n instanceof Property && ($provider = $n->getValueProvider()) ? $provider::class : null,
-//			'editable' => self::isPropertyEditable($n),
-//		]));
-//		exit;
+		$collection = new InputCollection;
 
-		return new InputCollection(
-			Traverser::collect($node)
-				->filter(fn(Node $n) => self::isPropertyEditable($n))
-				->map(fn(Property $p) => (static fn(InputSpecification $spec) =>
-					$spec->setPropertyWithUniqueKey($p->isInOptions()?->getUniqueKeyProperty()))(new InputSpecification($p, $this))
-				)
-		);
+		foreach (Traverser::start($node) as $n) {
+			if ($p = self::editable($n)) {
+				$collection->push(
+					(new InputSpecification($p, $this))
+						->setPropertyWithUniqueKey($p->isInOptions()?->getUniqueKeyProperty())
+				);
+			}
+		}
 
-
-//		$finder = function(Node $node) use ($founds, & $finder) {
-//
-//			if (empty($children = $node->getChildren())) {
-//
-//				if ($node instanceof Options) {
-//
-//					/** @var Property $candidateUniqueKeyProperty */
-//					$candidateUniqueKeyProperty = null;
-//
-//					foreach ($node->getCandidates() as /*$name =>*/ $valueProvider) {
-//						/** @var ValueProvider $valueProvider */
-//
-//						$property = $valueProvider->getProperty();
-//
-//						$founds->push(
-//							(new InputSpecification($property, $this))
-//								->setPropertyWithUniqueKey($candidateUniqueKeyProperty)
-//						);
-//
-//						if ($property?->isUniqueKey()) {
-//							$candidateUniqueKeyProperty = $property;
-//						}
-//					}
-//
-//					foreach ($node->getItems() as $picked) {
-//
-//						if ($picked instanceof Node) {
-//							$finder($picked);
-//						}
-//					}
-//
-//				} elseif ($node instanceof Property) {
-//
-//					if (($provider = $node->getValueProvider()) instanceof UserValueProvider
-//						|| $provider instanceof StaticArrayProvider) {
-//
-//						$founds->push(new InputSpecification($node, $this));
-//					}
-//				}
-//
-//				return;
-//			}
-//
-//			foreach ($children as $child) {
-//				$finder($child);
-//			}
-//		};
-//
-//		$finder($node);
-//
-//		return $founds;
+		return $collection;
 	}
 
 
-	private static function isPropertyEditable(Node $node): bool
+	private static function editable(Node $node): ?Property
 	{
-		return $node instanceof Property
-			&& $node->getValueProvider() instanceof UserValueProvider;
+		return $node instanceof Property && ! $node->isBag()
+			&& ($node->getValueProvider() instanceof UserValueProvider
+				|| $node->getValueProvider() instanceof StaticArrayProvider)
+			? $node : null;
 	}
 }

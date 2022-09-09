@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Schemer\Tests;
 
+use Nette\Utils\Arrays;
 use Schemer\NamedNode;
 use Schemer\Options;
 use Schemer\Property;
@@ -181,6 +182,19 @@ JSON,
 	Assert::same(
 		'Green',
 		$scheme->get('inquiry.steps[type=chooseOne].prompt.options[key=b].option')->getValue()
+	);
+
+	$chooseOne?->get('prompt.options', Options::class)
+		->pick('key=c')
+		?->set('option', 'Blue');
+
+	Assert::same(
+		[
+			'a' => 'Red',
+			'b' => 'Green',
+			'c' => 'Blue',
+		],
+		Arrays::associate($scheme->get('inquiry.steps[type=chooseOne].prompt.options')->toArray(), 'key=option')
 	);
 
 	// initialized scheme

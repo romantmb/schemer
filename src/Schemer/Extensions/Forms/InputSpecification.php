@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace Schemer\Extensions\Forms;
 
-use InvalidArgumentException;
 use Schemer\Property;
 use Schemer\Options;
 use Schemer\Validators\Inputs\NullableBooleanInput;
@@ -20,6 +19,7 @@ use Schemer\Extensions\Transformers\SchemePathToInputNameTransformer;
 use Schemer\Exceptions\SchemerException;
 use Schemer\Exceptions\InvalidNodeException;
 use Schemer\Exceptions\InvalidValueException;
+use InvalidArgumentException;
 
 
 class InputSpecification
@@ -65,6 +65,12 @@ class InputSpecification
 			default => throw new InvalidArgumentException(sprintf("'%s' is not a valid type.", $type)),
 		};
 		return $this;
+	}
+
+
+	public function getType(): string
+	{
+		return $this->type;
 	}
 
 
